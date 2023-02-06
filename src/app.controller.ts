@@ -4,6 +4,6 @@ import { Controller, Get } from '@nestjs/common';
 export class AppController {
   @Get("/")
   findAll(): string {
-    return 'ok';
+    return 'ok app';
   }
 }
