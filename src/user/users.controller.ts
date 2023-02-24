@@ -49,19 +49,21 @@ export class UsersController {
   @Post('logout')
   async logout(@Req() req: any, @Res() res: any) {
     // Xóa token trong memory
-    console.log("res:: ",req.headers.authorization)
-    const authorization = req.headers.authorization;
-    if(authorization ) {
-      const token = req.headers.authorization.split(' ')[1];
-    this.jwtService.sign({token}, { expiresIn: 0 });
-    }
-  
-    // Clear cookie
-    res.clearCookie('token');
-    return res.status(200).send({ message: 'Đăng xuất thành công!' });
+
+    return await this.service.logout(req,res);
   }
 
+  //  @Post('refresh-token')
+  // async refreshToken(@Req() req: Request, @Res() res: Response) {
+  //   const result = await this.authService.refreshToken(req.cookies.refresh_token);
+  //   // Set new access token in cookie
+  //   res.cookie('access_token', result.token, { httpOnly: true, maxAge: 3600000 }); // 1 hour
+  //   return result.data;
+  // }
+
 }
+
+
 
 
 

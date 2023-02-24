@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as cookieParser from 'cookie-parser';
 require('dotenv').config()
 
 var cors = require('cors')
@@ -25,7 +26,7 @@ async function bootstrap() {
 //     // Pass to next layer of middleware
 //     next();
 // });
-
+  app.use(cookieParser());
   app.use(cors())
   await app.listen(8000);
 }

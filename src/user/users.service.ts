@@ -1,5 +1,5 @@
 
-import { Injectable,HttpException, HttpStatus  } from '@nestjs/common';
+import { Injectable,HttpException, HttpStatus, Res  } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -36,23 +36,29 @@ export class UsersService {
 
       throw new HttpException('Tài khoản không tồn tại!',  errCode);
     }
-
+ 
     const isMatch = await compare(password, user.password);
 
     if (!isMatch) {
       throw new HttpException('Mật khẩu không chính xác!', errCode);
     }
 
-    
-
+    // return {
+    //     data: {
+    //       username: user?.username,
+    //       userRole: user?.userRole,
+    //       token: await this.createToken(user,res),
+    //       statusCode: HttpStatus.OK
+    //     }
+    // };
     return {
-        data: {
-          username: user?.username,
-          userRole: user?.userRole,
-          token: await this.createToken(user),
-          statusCode: HttpStatus.OK
-        }
-    };
+      data: {
+        username: user?.username,
+      userRole: user?.userRole,
+      token: await this.createToken(user),
+      statusCode: HttpStatus.OK
+      } 
+    }
   }
 
   async createToken(user:LoginDto) {
@@ -60,16 +66,8 @@ export class UsersService {
     console.log(process.env.SECRET_KEY)
     const token =  sign(payload,process.env.SECRET_KEY, { expiresIn: '1h', audience: user.username});
     const decodeData: any = jwt_decode(token);
-    // console.log("res::: ",res)
-    // if(res){
-    //   res.cookie('token', token, {
-    //   maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-    //   httpOnly: true,
-    //   secure: process.env.NODE_ENV === 'production',
-    //   sameSite: 'strict',
-    // });
-    // }   
-
+    // res.cookie('token', token, { maxAge: 3600000, httpOnly: true });
+    
     return {token,decodeData}
   }
 
@@ -100,7 +98,7 @@ async logout(req: any, res: any) {
     })
 
     return {
-      message: 'Logout successful',
+      message: 'Đăng xuất thành công',
     };
   }
 
