@@ -1,5 +1,5 @@
 
-import { Injectable,HttpException, HttpStatus, Res  } from '@nestjs/common';
+import { Injectable,HttpException, HttpStatus, Res, NotFoundException  } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -53,8 +53,7 @@ export class UsersService {
     // };
     return {
       data: {
-        username: user?.username,
-      userRole: user?.userRole,
+      userInfo: user,
       token: await this.createToken(user),
       statusCode: HttpStatus.OK
       } 
@@ -66,7 +65,7 @@ export class UsersService {
     console.log(process.env.SECRET_KEY)
     const token =  sign(payload,process.env.SECRET_KEY, { expiresIn: '1h', audience: user.username});
     const decodeData: any = jwt_decode(token);
-    // res.cookie('token', token, { maxAge: 3600000, httpOnly: true });
+    
     
     return {token,decodeData}
   }
@@ -83,33 +82,31 @@ export class UsersService {
     }).save();
   }
 
-async logout(req: any, res: any) {
-    const token = req.cookies.token;
+async logout(req: any) {
+    console.log("req::: ",req)
     console.log("logout")
-    if (!token) {
-      throw new HttpException('Token not found', HttpStatus.UNAUTHORIZED);
-    }
-
-    // Xóa token tại đây. Ví dụ dùng clearCookie
-    res.clearCookie('token', {
-      httpOnly: true,
-      expires: new Date(Date.now()),
-      sameSite: 'strict'
-    })
-
+    
     return {
       message: 'Đăng xuất thành công',
     };
-  }
+}
 
 
   async update(id: string, updateUser: UpdateUser): Promise<User> {
-    return await this.model.findByIdAndUpdate(id, updateUser).exec();
-    // return await this.model.findByIdAndUpdate(id, {updateUser,updateAt: Date.now()}).exec();
+    // return await this.model.findByIdAndUpdate(id, updateUser).exec();
+    return await this.model.findByIdAndUpdate(id, {updateUser,updateAt: Date.now()}).exec();
   }
 
-  async delete(id: string): Promise<User> {
-    return await this.model.findByIdAndDelete(id).exec();
-  }
+  // async delete(id: string): Promise<User> {
 
+  //   return await this.model.findByIdAndDelete(id).exec()
+  // }
+
+  async delete(id: string): Promise<{ message: string, user: User }> {
+  const deletedUser = await this.model.findByIdAndDelete(id).exec();
+  if (!deletedUser) {
+    throw new NotFoundException(`Người dùng với id: ${id} not found`);
+  }
+  return { message: `Xóa thành công người dùng với id là ${id}`, user: deletedUser };
+}
 }

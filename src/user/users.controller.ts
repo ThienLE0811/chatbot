@@ -13,7 +13,7 @@ export class UsersController {
     private readonly jwtService: JwtService) {}
   
 
-   @Get()
+   @Get('/getList')
   async index() {
     return await this.service.findAll();
   }
@@ -29,12 +29,12 @@ export class UsersController {
     return await this.service.create(createUser);
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   async update(@Param('id') id: string, @Body() updateUser: UpdateUser) {
     return await this.service.update(id, updateUser);
   }
 
-  @Delete(':id')
+  @Delete('/delete/:id')
   async delete(@Param('id') id: string) {
     return await this.service.delete(id);
   }
@@ -46,11 +46,11 @@ export class UsersController {
     return await this.service.login(loginDto);
   }
 
-  @Post('logout')
-  async logout(@Req() req: any, @Res() res: any) {
+  @Post('/logout')
+  async logout(@Req() req: any) {
     // Xóa token trong memory
 
-    return await this.service.logout(req,res);
+    return await this.service.logout(req);
   }
 
   //  @Post('refresh-token')
