@@ -1,6 +1,7 @@
 export class EntitiesDto {
     nameEntities: string;
-    dataEntities: {};
+    dataEntities: [];
+    description: string;
     createdAt: Date;
     updateAt: Date;
 }

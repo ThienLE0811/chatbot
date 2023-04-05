@@ -12,6 +12,9 @@ export class Intents {
   data: {};
 
   @Prop()
+  description: string;
+  
+  @Prop()
   createdAt: Date;
 
   @Prop()

@@ -17,12 +17,12 @@ export class EntitiesController {
     return await this.service.findOne(id);
   }
 
-  @Post()
+  @Post("/create")
   async create(@Body() createEntities: CreateEntities) {
     return await this.service.create(createEntities);
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   async update(@Param('id') id: string, @Body() updateEntities: UpdateEntities) {
     return await this.service.update(id, updateEntities);
   }

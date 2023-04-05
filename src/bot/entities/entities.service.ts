@@ -36,7 +36,7 @@ export class EntitiesService {
   }
 
   async update(id: string, updateEntities: UpdateEntities): Promise<{message: string,statusCode: number, Entities: Entities}> {
-    const updateIntent = await this.model.findByIdAndUpdate(id, updateEntities).exec();
+    const updateIntent = await this.model.findByIdAndUpdate(id, {...updateEntities,updateAt: Date.now()}, { new: true }).exec();
     return {
       message: "Cập thật thành công",
       statusCode: 200,

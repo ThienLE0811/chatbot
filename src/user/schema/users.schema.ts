@@ -1,27 +1,31 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
+import { Role } from 'src/auth/role_services/schema/role.schema';
 
 export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {
   @Prop({required:true})
-  username: string;
+  userName: string;
 
   @Prop({required:true})
   password: string;
 
   @Prop()
-  firstname: string;
+  firstName: string;
 
   @Prop()
-  lastname: string;
+  lastName: string;
 
   @Prop({required:true})
-  email: string;
+  email:  string;
 
-  @Prop()
-  userRole: string;
+  @Prop({type: mongoose.Schema.Types.String, ref: 'Role'})
+  userRoleName: Role
+
+  @Prop({ type: Object })
+  userRole: { [key: string]: boolean };
 
   @Prop()
   createdAt: Date;
@@ -30,5 +34,6 @@ export class User {
   updateAt: Date;
 
 }
+
 
 export const UserSchema = SchemaFactory.createForClass(User);

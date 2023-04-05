@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { CreateResponses } from './dto/create-response.dto';
 import { UpdateResponses } from './dto/update-response.dto';
 import { ResponsesService } from './response.service';
@@ -7,7 +7,7 @@ import { ResponsesService } from './response.service';
 export class ResponsesController {
   constructor(private readonly service: ResponsesService) {}
 
-   @Get()
+   @Get('/getList')
   async index() {
     return await this.service.findAll();
   }
@@ -17,14 +17,19 @@ export class ResponsesController {
     return await this.service.findOne(id);
   }
 
-  @Post()
+  @Post('/create')
   async create(@Body() createResponses: CreateResponses) {
     return await this.service.create(createResponses);
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   async update(@Param('id') id: string, @Body() updateResponses: UpdateResponses) {
     return await this.service.update(id, updateResponses);
+  }
+
+  @Delete('/delete/:id')
+  async delete(@Param('id') id: string) {
+    return await this.service.delete(id);
   }
 }
 

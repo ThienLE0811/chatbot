@@ -9,7 +9,7 @@ export class Responses {
   title: string;
 
   @Prop({type: []})
-  data: { name_data:{type: Object, text: []}};
+  data: { };
 
   @Prop()
   createdAt: Date;

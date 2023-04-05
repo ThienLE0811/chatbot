@@ -8,8 +8,11 @@ export class Entities {
   @Prop({required:true})
   nameEntities: string;
 
-  @Prop({type: {}})
-  dataEntities: {};
+  @Prop({type: []})
+  dataEntities: [];
+
+  @Prop()
+  description: string;
 
   @Prop()
   createdAt: Date;

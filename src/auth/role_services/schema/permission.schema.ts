@@ -8,10 +8,10 @@ export class Permission {
   @Prop({ required: true })
   module: string;
 
-  @Prop({ required: true })
+  @Prop()
   module_name: string;
 
-  @Prop([String])
+  @Prop({ required: true , type: [{ type: String }] })
   actions: string[];
 
 }

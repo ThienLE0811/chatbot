@@ -1,8 +1,9 @@
 
-import { Injectable,HttpException, HttpStatus, Res, NotFoundException  } from '@nestjs/common';
+import { Injectable,HttpException, HttpStatus, Res, NotFoundException, ValidationError  } from '@nestjs/common';
 import { Request, Response } from 'express';
+
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, NumberSchemaDefinition } from 'mongoose';
 import { CreateUser } from './dto/create-user.dto';
 import { UpdateUser } from './dto/update-user.dto';
 import { User, UserDocument } from './schema/users.schema';
@@ -11,30 +12,43 @@ import { compare } from 'bcryptjs';
 import jwt_decode from "jwt-decode";
 import { sign } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
+import { Role, RoleDocument } from 'src/auth/role_services/schema/role.schema';
 require('dotenv').config()
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly model: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private readonly model: Model<UserDocument>,
+  @InjectModel(Role.name) private modelRole: Model<RoleDocument>,
+  ) {}
+
+
 
   async findAll(): Promise<User[]> {
     return await this.model.find().exec();
   }
 
   async findOne(id: string): Promise<User> {
+    let userRoleName = await this.model.findById(id).exec().then(data=> {
+      return data.userRoleName});
+    const role = await this.modelRole.findOne({roleType: userRoleName})
+    const userRole = role.roleAction
+
+    await this.model.findOneAndUpdate(
+    { _id: id },
+    { userRole: userRole }
+  ).exec();
     return await this.model.findById(id).exec();
   }
 
   async login( loginDto: LoginDto) {
-    const { username, password} = loginDto;
+    const { userName, password} = loginDto;
     let errCode =  HttpStatus.UNAUTHORIZED
 
 
-    const user = await this.model.findOne({ username }).lean();
+    const user = await this.model.findOne({ userName }).lean();
     console.log(user)
-    if (!user?.username) {
-
-      throw new HttpException('Tài khoản không tồn tại!',  errCode);
+    if (!user?.userName) {
+       throw new HttpException('Tài khoản không tồn tại!',  errCode);
     }
  
     const isMatch = await compare(password, user.password);
@@ -43,14 +57,8 @@ export class UsersService {
       throw new HttpException('Mật khẩu không chính xác!', errCode);
     }
 
-    // return {
-    //     data: {
-    //       username: user?.username,
-    //       userRole: user?.userRole,
-    //       token: await this.createToken(user,res),
-    //       statusCode: HttpStatus.OK
-    //     }
-    // };
+    
+    delete user.password;
     return {
       data: {
       userInfo: user,
@@ -61,22 +69,30 @@ export class UsersService {
   }
 
   async createToken(user:LoginDto) {
-    const payload = { username: user.username };
+    const payload = { username: user.userName };
     console.log(process.env.SECRET_KEY)
-    const token =  sign(payload,process.env.SECRET_KEY, { expiresIn: '1h', audience: user.username});
+    const token =  sign(payload,process.env.SECRET_KEY, { expiresIn: '1h', audience: user.userName});
     const decodeData: any = jwt_decode(token);
-    
-    
+
     return {token,decodeData}
   }
 
   async create(createUser: CreateUser): Promise<User> {
     let saltRounds = 10;
     let hashedPassword = await bcrypt.hash(createUser?.password, saltRounds);
+    let userRoleName = createUser?.userRoleName || 'USER'
+    console.log("role:: ",userRoleName)
+    const role = await this.modelRole.findOne({roleType: userRoleName})
+    const userRole = role.roleAction
+    
+
+
     console.log(12)
     return await new this.model({
       ...createUser,
-       password: hashedPassword,
+      userRole: userRole,
+      userRoleName: "USER",
+      password: hashedPassword,
       createdAt: new Date(),
       updateAt: new Date(),
     }).save();
@@ -92,9 +108,21 @@ async logout(req: any) {
 }
 
 
-  async update(id: string, updateUser: UpdateUser): Promise<User> {
+  async update(id: string, updateUser: UpdateUser): Promise<{message: string,statusCode: number,User: User}> {
     // return await this.model.findByIdAndUpdate(id, updateUser).exec();
-    return await this.model.findByIdAndUpdate(id, {updateUser,updateAt: Date.now()}).exec();
+
+    let userRoleName = await this.model.findById(id).exec().then(data=> {
+      return data.userRoleName});
+    console.log("Name role: ",userRoleName)
+    const role = await this.modelRole.findOne({roleType: userRoleName})
+    const userRole = role.roleAction
+    const update = await this.model.findByIdAndUpdate(id, {...updateUser,userRole: userRole,updateAt: Date.now()}, { new: true }).exec();
+    
+    return {
+      message: "Cập nhật thành công",
+      statusCode: 200,
+      User: update
+    }
   }
 
   // async delete(id: string): Promise<User> {
@@ -102,11 +130,19 @@ async logout(req: any) {
   //   return await this.model.findByIdAndDelete(id).exec()
   // }
 
-  async delete(id: string): Promise<{ message: string, user: User }> {
+  async delete(id: string): Promise<{ message: string, statusCode: number, user: User }> {
   const deletedUser = await this.model.findByIdAndDelete(id).exec();
   if (!deletedUser) {
     throw new NotFoundException(`Người dùng với id: ${id} not found`);
   }
-  return { message: `Xóa thành công người dùng với id là ${id}`, user: deletedUser };
+  return { message: `Xóa thành công người dùng với id là ${id}`, statusCode:200, user: deletedUser };
 }
+
+  async getUsersWithRoles(): Promise<User[]> {
+  return this.model.find().populate('roles').exec();
+}
+
+
+
+
 }

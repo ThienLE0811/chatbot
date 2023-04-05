@@ -36,7 +36,7 @@ export class IntentsService {
   }
 
   async update(id: string, updateIntents: UpdateIntents): Promise<{message: string,statusCode: number, intents: Intents}> {
-    const updateIntent = await this.model.findByIdAndUpdate(id, updateIntents).exec();
+    const updateIntent = await this.model.findByIdAndUpdate(id, {...updateIntents,updateAt: Date.now()}, { new: true }).exec();
     return {
       message: "Cập thật thành công",
       statusCode: 200,

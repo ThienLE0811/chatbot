@@ -4,15 +4,21 @@ import { UsersModule } from './user/users.module';
 import { AppController } from './app.controller';
 import { BotModule } from './bot/bot.module';
 import { BotController } from './bot/bot.controller';
-import { PermissionModule } from './core_permission/permission.module';
-import { PermissionController } from './core_permission/permission.controller';
-import { RolesModule } from './role/role.module';
+import { RolesModule } from './auth/role_services/role_permission.module';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './auth/jwt_authGuard/jwt-auth.guard';
+
 
 
 @Module({
-  imports: [MongooseModule.forRoot('mongodb+srv://backend:backend@cluster0.tprqz.mongodb.net/?retryWrites=true&w=majority'), UsersModule,BotModule,PermissionModule,RolesModule
+  imports: [MongooseModule.forRoot('mongodb+srv://backend:backend@cluster0.tprqz.mongodb.net/?retryWrites=true&w=majority'), UsersModule,BotModule,RolesModule
 ],
   controllers: [AppController,BotController],
-
+  // providers: [
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: JwtAuthGuard,
+  //   },
+  // ],
 })
 export class AppModule {}

@@ -17,12 +17,12 @@ export class IntentsController {
     return await this.service.findOne(id);
   }
 
-  @Post()
+  @Post("/create")
   async create(@Body() createIntents: CreateIntents) {
     return await this.service.create(createIntents);
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   async update(@Param('id') id: string, @Body() updateIntents: UpdateIntents) {
     return await this.service.update(id, updateIntents);
   }

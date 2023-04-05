@@ -28,7 +28,7 @@ export class ResponsesService {
   }
 
   async update(id: string, updateResponses: UpdateResponses): Promise<Responses> {
-    return await this.model.findByIdAndUpdate(id, updateResponses).exec();
+    return await this.model.findByIdAndUpdate(id, {...updateResponses,updateAt: Date.now()}, { new: true }).exec();
   }
 
   async delete(id: string): Promise<Responses> {
