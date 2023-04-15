@@ -40,31 +40,31 @@ export class RolesController {
     return await this.service.deleteRole(id);
   }
 
-  // @Get('permission/getList')
-  // async finAllPermission() {
-  //   return await this.service.findAllPermission();
-  // }
+  @Get('permission/getList')
+  async finAllPermission() {
+    return await this.service.findAllPermission();
+  }
 
-  // @Get('permission/:id')
-  // async findPermission(@Param('id') id: string) {
-  //   return await this.service.findOnePermission(id);
-  // }
+  @Get('permission/:id')
+  async findPermission(@Param('id') id: string) {
+    return await this.service.findOnePermission(id);
+  }
 
-  // @Post('permission/create')
-  // async createPermission(@Body() createUser: CreatePermissionDto ) {
-  //   console.log(123)
-  //   return await this.service.createPermission(createUser);
-  // }
+  @Post('permission/create')
+  async createPermission(@Body() createUser: CreatePermissionDto ) {
+    console.log(123)
+    return await this.service.createPermission(createUser);
+  }
 
-  // @Put('permission/update/:id')
-  // async updatePermission(@Param('id') id: string, @Body() updateUser: UpdatePermissionDto) {
-  //   return await this.service.updatePermission(id, updateUser);
-  // }
+  @Put('permission/update/:id')
+  async updatePermission(@Param('id') id: string, @Body() updateUser: UpdatePermissionDto) {
+    return await this.service.updatePermission(id, updateUser);
+  }
 
-  // @Delete('permission/delete/:id')
-  // async deletePermission(@Param('id') id: string) {
-  //   return await this.service.deletePermission(id);
-  // }
+  @Delete('permission/delete/:id')
+  async deletePermission(@Param('id') id: string) {
+    return await this.service.deletePermission(id);
+  }
   
 
 

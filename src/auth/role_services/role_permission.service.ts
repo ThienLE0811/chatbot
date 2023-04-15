@@ -73,31 +73,31 @@ export class RoleService {
 
 
 
-  //   async findAllPermission(): Promise<Permission[]> {
-  //   return await this.permissionModel.find().exec();
-  // }
+    async findAllPermission(): Promise<Permission[]> {
+    return await this.permissionModel.find().exec();
+  }
 
-  // async findOnePermission(id: string): Promise<Permission> {
-  //   return await this.permissionModel.findById(id).exec();
-  // }
+  async findOnePermission(id: string): Promise<Permission> {
+    return await this.permissionModel.findById(id).exec();
+  }
 
-  // async createPermission(createPermission: CreatePermissionDto): Promise<Permission> {
-  //   console.log("created")
-  //   return await new this.permissionModel({
-  //     ...createPermission,
-  //     createdAt: new Date(),
-  //     updateAt: new Date(),
-  //   }).save();
-  // }
+  async createPermission(createPermission: CreatePermissionDto): Promise<Permission> {
+    console.log("created")
+    return await new this.permissionModel({
+      ...createPermission,
+      createdAt: new Date(),
+      updateAt: new Date(),
+    }).save();
+  }
 
-  // async updatePermission(id: string, updatePermission: UpdatePermissionDto): Promise<Permission> {
-  //   // return await this.model.findByIdAndUpdate(id, updateUser).exec();
-  //   return await this.permissionModel.findByIdAndUpdate(id, {...updatePermission,updateAt: Date.now()}).exec();
-  // }
+  async updatePermission(id: string, updatePermission: UpdatePermissionDto): Promise<Permission> {
+    // return await this.model.findByIdAndUpdate(id, updateUser).exec();
+    return await this.permissionModel.findByIdAndUpdate(id, {...updatePermission,updateAt: Date.now()}).exec();
+  }
 
-  // async deletePermission(id: string): Promise<Permission> {
-  //   return await this.permissionModel.findByIdAndDelete(id).exec();
-  // }
+  async deletePermission(id: string): Promise<Permission> {
+    return await this.permissionModel.findByIdAndDelete(id).exec();
+  }
 
 
 }

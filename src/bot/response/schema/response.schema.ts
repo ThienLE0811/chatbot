@@ -8,8 +8,8 @@ export class Responses {
   @Prop()
   title: string;
 
-  @Prop({type: []})
-  data: { };
+  @Prop()
+  data: [];
 
   @Prop()
   createdAt: Date;

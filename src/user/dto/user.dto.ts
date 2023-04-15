@@ -24,6 +24,9 @@ export class UserDto {
     @IsString()
     userRoleName: string
 
+    @IsString()
+    userGroup: string
+
     @IsDate()
     createdAt: Date;
 

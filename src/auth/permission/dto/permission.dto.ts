@@ -10,7 +10,7 @@ export class PermissionDto {
     module_name: string;
 
     @IsString()
-    actions: [];
+    actions: string[];
 
     @IsDate()
     createdAt: Date;

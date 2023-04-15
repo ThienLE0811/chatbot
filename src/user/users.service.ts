@@ -32,10 +32,14 @@ export class UsersService {
       return data.userRoleName});
     const role = await this.modelRole.findOne({roleType: userRoleName})
     const userRole = role.roleAction
+    const userGroup = role.description
+
+    console.log("userGroup:: ",userGroup)
 
     await this.model.findOneAndUpdate(
     { _id: id },
-    { userRole: userRole }
+    { userRole: userRole },
+    {userGroup: userGroup}
   ).exec();
     return await this.model.findById(id).exec();
   }
@@ -57,12 +61,16 @@ export class UsersService {
       throw new HttpException('Mật khẩu không chính xác!', errCode);
     }
 
-    
+    const accessToken = await this.createToken(user)
+    // const refreshToken = await this.generateRefreshToken(user)
+
     delete user.password;
     return {
       data: {
       userInfo: user,
-      token: await this.createToken(user),
+      token: {
+        access_token: accessToken
+      },
       statusCode: HttpStatus.OK
       } 
     }
@@ -77,6 +85,13 @@ export class UsersService {
     return {token,decodeData}
   }
 
+// async generateRefreshToken(user: User) {
+//   const refreshToken = uuid();
+//   user.refreshToken = refreshToken;
+//   await this.model.updateOne({ _id: user._id }, { refreshToken });
+//   return refreshToken;
+// }
+
   async create(createUser: CreateUser): Promise<User> {
     let saltRounds = 10;
     let hashedPassword = await bcrypt.hash(createUser?.password, saltRounds);
@@ -84,6 +99,7 @@ export class UsersService {
     console.log("role:: ",userRoleName)
     const role = await this.modelRole.findOne({roleType: userRoleName})
     const userRole = role.roleAction
+    const userGroup = role.description
     
 
 
@@ -92,6 +108,7 @@ export class UsersService {
       ...createUser,
       userRole: userRole,
       userRoleName: "USER",
+      userGroup: userGroup,
       password: hashedPassword,
       createdAt: new Date(),
       updateAt: new Date(),
@@ -111,12 +128,19 @@ async logout(req: any) {
   async update(id: string, updateUser: UpdateUser): Promise<{message: string,statusCode: number,User: User}> {
     // return await this.model.findByIdAndUpdate(id, updateUser).exec();
 
-    let userRoleName = await this.model.findById(id).exec().then(data=> {
-      return data.userRoleName});
+    // let userRoleName = await this.model.findById(id).exec().then(data=> {
+    //   return data.userRoleName});
+    // console.log("Name role: ",userRoleName)
+
+    const userRoleName = updateUser.userRoleName
     console.log("Name role: ",userRoleName)
+
     const role = await this.modelRole.findOne({roleType: userRoleName})
+
     const userRole = role.roleAction
-    const update = await this.model.findByIdAndUpdate(id, {...updateUser,userRole: userRole,updateAt: Date.now()}, { new: true }).exec();
+    const userGroup = role.description
+    console.log("userGroup:: ",userGroup)
+    const update = await this.model.findByIdAndUpdate(id, {...updateUser,userRole: userRole,userGroup:userGroup,updateAt: Date.now()}, { new: true }).exec();
     
     return {
       message: "Cập nhật thành công",

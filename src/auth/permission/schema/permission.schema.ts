@@ -11,8 +11,8 @@ export class Permission {
   @Prop()
   module_name: string;
 
-  @Prop({ required: true , type: [] })
-  actions: [];
+  @Prop({ required: true , type: [{ type: String }] })
+  actions: string[];
 
 }
 

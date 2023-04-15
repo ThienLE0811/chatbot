@@ -9,7 +9,7 @@ export class Intents {
   title: string;
 
   @Prop({type: []})
-  data: {};
+  examples: [];
 
   @Prop()
   description: string;

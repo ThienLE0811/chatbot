@@ -1,6 +1,6 @@
 export class IntentsDto {
     title: string;
-    data: [];
+    examples: [];
     description: string;
     createdAt: Date;
     updateAt: Date;

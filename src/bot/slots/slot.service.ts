@@ -20,15 +20,27 @@ export class SlotsService {
     return await this.model.findById(id).exec();
   }
 
-  async create(createSlots: CreateSlots): Promise<Slots> {
-    return await new this.model({
+  async create(createSlots: CreateSlots): Promise<{message: string,statusCode: number,createSlots:Slots}> {
+
+    const create = await new this.model({
       ...createSlots,
       createdAt: new Date(),
     }).save();
+
+    return {
+      message: "Tạo mới slots thành công",
+      statusCode: 200,
+      createSlots: create
+    }
   }
 
-  async update(id: string, updateSlots: UpdateSlots): Promise<Slots> {
-    return await this.model.findByIdAndUpdate(id, updateSlots).exec();
+  async update(id: string, updateSlots: UpdateSlots): Promise<{message: string,statusCode: number,updateSlots:Slots}> {
+    const update = await this.model.findByIdAndUpdate(id, updateSlots).exec();
+    return {
+      message: "Cập nhật slots thành công",
+      statusCode: 200,
+      updateSlots: update
+    }
   }
 
   async delete(id: string): Promise<Slots> {

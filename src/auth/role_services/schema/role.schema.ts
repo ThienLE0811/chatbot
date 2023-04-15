@@ -20,8 +20,8 @@ export class Role {
   @Prop()
   actionName: string
   
-  @Prop({ type: Object })
-  roleAction: { [key: string]: boolean };
+  @Prop({ type: {}})
+  roleAction: {} ;
 
   @Prop()
   roleType: string;

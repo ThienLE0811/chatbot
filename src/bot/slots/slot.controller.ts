@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import {  CreateSlots } from './dto/create-slot.dto';
 import {  UpdateSlots } from './dto/update-slot.dto';
 import {  SlotsService } from './slot.service';
@@ -7,7 +7,7 @@ import {  SlotsService } from './slot.service';
 export class SlotController {
   constructor(private readonly service: SlotsService) {}
 
-   @Get()
+   @Get('getList')
   async index() {
     return await this.service.findAll();
   }
@@ -17,14 +17,19 @@ export class SlotController {
     return await this.service.findOne(id);
   }
 
-  @Post()
+  @Post('/create')
   async create(@Body() createSlots: CreateSlots) {
     return await this.service.create(createSlots);
   }
 
-  @Put(':id')
+  @Put('/update/:id')
   async update(@Param('id') id: string, @Body() updateSlots: UpdateSlots) {
     return await this.service.update(id, updateSlots);
+  }
+
+  @Delete('/delete/:id')
+  async delete(@Param('id') id: string) {
+    return await this.service.delete(id);
   }
 }
 

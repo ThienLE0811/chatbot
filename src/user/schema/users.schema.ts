@@ -24,6 +24,9 @@ export class User {
   @Prop({type: mongoose.Schema.Types.String, ref: 'Role'})
   userRoleName: Role
 
+  @Prop({type: mongoose.Schema.Types.String, ref: 'Role'})
+  userGroup: Role
+
   @Prop({ type: Object })
   userRole: { [key: string]: boolean };
 
