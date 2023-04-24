@@ -13,6 +13,7 @@ import jwt_decode from "jwt-decode";
 import { sign } from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { Role, RoleDocument } from 'src/auth/role_services/schema/role.schema';
+import { async } from 'rxjs';
 require('dotenv').config()
 
 @Injectable()
@@ -93,8 +94,20 @@ export class UsersService {
 // }
 
   async create(createUser: CreateUser): Promise<User> {
+    let errCode =  HttpStatus.UNAUTHORIZED
     let saltRounds = 10;
     let hashedPassword = await bcrypt.hash(createUser?.password, saltRounds);
+    const userNameCheck = await this.model.findOne({ userName: createUser?.userName });
+    async function checkUsernameExists(userName:string) {
+      const user = userNameCheck 
+      return !!user;
+    }
+
+  const userExists = await checkUsernameExists(createUser?.userName);
+  
+    if (userExists) {
+    throw new HttpException('Tên người dùng đã tồn tại!',errCode);
+    }
     let userRoleName = createUser?.userRoleName || 'USER'
     console.log("role:: ",userRoleName)
     const role = await this.modelRole.findOne({roleType: userRoleName})

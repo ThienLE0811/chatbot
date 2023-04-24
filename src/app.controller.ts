@@ -8,9 +8,12 @@
 //   }
 // }
 
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { MongoService } from './app.service';
-
+interface dataParseMessage {
+  text: string,
+  message_id: string
+}
 @Controller()
 export class AppController {
   constructor(private readonly mongoService: MongoService) {}
@@ -21,7 +24,13 @@ export class AppController {
   }
 
   @Get('/getAllData')
-  async etAllData(): Promise<string[]> {
+  async getAllData(): Promise<string[]> {
     return this.mongoService.getAllData();
   }
+
+  @Post('/parseMessage')
+  async parseMessage(@Body() data: dataParseMessage): Promise<string[]> {
+    return this.mongoService.parseMessage(data);
+  }
+
 }

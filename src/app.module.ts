@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './user/users.module';
 import { AppController } from './app.controller';
@@ -8,6 +8,7 @@ import { RolesModule } from './auth/role_services/role_permission.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt_authGuard/jwt-auth.guard';
 import { MongoService } from './app.service';
+import { MyMiddleware } from './auth/middleware/my.middleware';
 
 
 
@@ -23,4 +24,10 @@ import { MongoService } from './app.service';
   //   },
   // ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(MyMiddleware)
+      .forRoutes('*');
+  }
+}
