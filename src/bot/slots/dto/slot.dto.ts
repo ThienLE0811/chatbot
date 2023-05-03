@@ -1,8 +1,7 @@
 export class SlotsDto {
     nameSlot: string;
     mapping: []
-    type: string;
-    autoFill: boolean;
+    type: string
     createdAt: Date;
     updateAt: Date;
 }

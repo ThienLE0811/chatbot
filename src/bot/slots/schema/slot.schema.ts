@@ -12,8 +12,8 @@ export class Slots {
   @Prop({ type: []})
   mapping: [];
 
-  @Prop()
-  autoFill: boolean
+  // @Prop()
+  // autoFill: boolean
 
   @Prop()
   type: string
