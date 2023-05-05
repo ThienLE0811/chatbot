@@ -16,19 +16,37 @@ import { Responses, ResponsesSchema } from './response/schema/response.schema';
 import { Slots, SlotsSchema } from './slots/schema/slot.schema';
 import { SlotController } from './slots/slot.controller';
 import { SlotsService } from './slots/slot.service';
-
+import { Nlu, NluSchema } from './nlu/schema/nlu.schema';
+import { NluController } from './nlu/nlu.controller';
+import { NluService } from './nlu/nlu.service';
 
 @Module({
-    imports: [
+  imports: [
     MongooseModule.forFeature([
       { name: Responses.name, schema: ResponsesSchema },
       { name: Slots.name, schema: SlotsSchema },
       { name: Forms.name, schema: FormsSchema },
-      {name: Intents.name, schema: IntentsSchema},
-      {name: Entities.name, schema: EntitiesSchema}
+      { name: Intents.name, schema: IntentsSchema },
+      { name: Entities.name, schema: EntitiesSchema },
+      { name: Nlu.name, schema: NluSchema },
     ]),
   ],
-  controllers: [BotController,ResponsesController,SlotController,FormsController,IntentsController, EntitiesController],
-  providers: [ResponsesService,SlotsService,FormsService,IntentsService, EntitiesService],
+  controllers: [
+    BotController,
+    ResponsesController,
+    SlotController,
+    FormsController,
+    IntentsController,
+    EntitiesController,
+    NluController,
+  ],
+  providers: [
+    ResponsesService,
+    SlotsService,
+    FormsService,
+    IntentsService,
+    EntitiesService,
+    NluService,
+  ],
 })
 export class BotModule {}
