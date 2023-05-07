@@ -3,7 +3,8 @@ import { HydratedDocument } from 'mongoose';
 
 export type NluDocument = HydratedDocument<Nlu>;
 
-@Schema()
+
+@Schema({collection: 'nlu'})
 export class Nlu {
   @Prop({ required: true })
   intent: string;

@@ -47,15 +47,16 @@ export class MongoService {
       (collection) =>
         collection.name !== 'users' &&
         collection.name !== 'permissions' &&
-        collection.name !== 'slots' &&
-        collection.name !== 'forms' &&
         collection.name !== 'roles',
     );
 
     const dataPromises = filteredCollections.map(async (collection) => {
       let data: any = await this.connection
         .collection(collection.name)
-        .find({}, { projection: { _id: 0, __v: 0 } })
+        .find(
+          {},
+          { projection: { _id: 0, __v: 0, createdAt: 0, updatedAt: 0 } },
+        )
         .toArray();
       // transform data for each collection
       if (collection.name === 'responses') {
@@ -66,9 +67,37 @@ export class MongoService {
         }, {});
       } else if (collection.name === 'intents') {
         data = data.map((item: any) => item.title);
-      } else if (collection.name === 'domains') {
-        data = data.map((item: any) => item.domain);
+      } else if (collection.name === 'forms') {
+        data = {};
+      } else if (collection.name === 'slots') {
+        const slots = data.reduce((acc: any, curr: any) => {
+          const { nameSlot, mapping, type } = curr;
+
+          acc[nameSlot] = {
+            type: type,
+            mappings: mapping.map((m: any) => {
+              return {
+                type: m.type,
+                entity: m.entity,
+              };
+            }),
+          };
+
+          return acc;
+        }, {});
+
+        data = slots;
+      } else if (collection.name === 'nlu') {
+        data = data.map((item: any) => {
+          const { intent, examples } = item;
+          const newExamples = `- ${examples.join('\n- ')}\n`;
+          return {
+            intent: intent,
+            examples: newExamples,
+          };
+        });
       }
+
       return { [collection.name]: data };
     });
 
@@ -94,7 +123,7 @@ export class MongoService {
           },
           headers: {
             'Content-Type': 'application/yaml',
-            Accept: 'application/x-yaml',
+            Accept: '*',
           },
         },
       );
@@ -102,7 +131,7 @@ export class MongoService {
       return response.data;
     } catch (error) {
       console.log('bị lỗi ::::::::::', error);
-      return dataModel;
+      return error;
     }
   }
 
@@ -128,6 +157,7 @@ export class MongoService {
         },
       );
       console.log('response ::::: ', response);
+      console.log('response headers ::::: ', response.headers);
       return response.data;
     } catch (error) {
       console.log('bị lỗi ::::::::::', error);

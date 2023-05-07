@@ -43,8 +43,18 @@ export class SlotsService {
     }
   }
 
-  async delete(id: string): Promise<Slots> {
-    return await this.model.findByIdAndDelete(id).exec();
-  }
+  // async delete(id: string): Promise<Slots> {
+  //   return await this.model.findByIdAndDelete(id).exec();
+  // }
 
+  async delete(
+    id: string,
+  ): Promise<{ message: string; statusCode: number; Slots: Slots }> {
+    const deleteSlots = await this.model.findByIdAndDelete(id).exec();
+    return {
+      message: 'Xóa thành công',
+      statusCode: 200,
+      Slots: deleteSlots,
+    };
+  }
 }
