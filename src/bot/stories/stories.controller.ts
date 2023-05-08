@@ -11,7 +11,7 @@ import { CreateStories } from './dto/create-stories.dto';
 import { UpdateStories } from './dto/update-stories.dto';
 import { StoriesService } from './stories.service';
 
-@Controller('Stories')
+@Controller('stories')
 export class StoriesController {
   constructor(private readonly service: StoriesService) {}
 
