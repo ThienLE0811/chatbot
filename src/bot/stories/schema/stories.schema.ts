@@ -15,7 +15,7 @@ export class Stories {
   createdAt: Date;
 
   @Prop()
-  updateAt: Date;
+  updatedAt: Date;
 }
 
 export const StoriesSchema = SchemaFactory.createForClass(Stories);

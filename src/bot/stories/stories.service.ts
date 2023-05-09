@@ -41,7 +41,7 @@ export class StoriesService {
     const updateStoriess = await this.model
       .findByIdAndUpdate(
         id,
-        { ...updateStories, updateAt: Date.now() },
+        { ...updateStories, updatedAt: Date.now() },
         { new: true },
       )
       .exec();
