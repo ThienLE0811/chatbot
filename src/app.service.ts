@@ -47,6 +47,8 @@ export class MongoService {
       (collection) =>
         collection.name !== 'users' &&
         collection.name !== 'permissions' &&
+        collection.name !== 'actions' &&
+        // collection.name !== 'stories' &&
         collection.name !== 'roles',
     );
 
@@ -69,8 +71,7 @@ export class MongoService {
       // transform data for each collection
       if (collection.name === 'responses') {
         data = data.reduce((acc, curr) => {
-          const title = curr.title.replace('utter_', '');
-          acc[title] = curr.data;
+          acc[curr.title] = curr.data;
           return acc;
         }, {});
       } else if (collection.name === 'intents') {
@@ -104,6 +105,15 @@ export class MongoService {
             examples: newExamples,
           };
         });
+      } else if (collection.name === 'actions') {
+        data = data.map((item) => {
+          if (item.action) {
+            item.action = item.action.replace('action: ', '');
+          }
+          return item;
+        });
+      } else if (collection.name === 'entities') {
+        data = data.map((item: any) => item.nameEntities);
       }
 
       return { [collection.name]: data };
@@ -121,26 +131,27 @@ export class MongoService {
     const dataModel = dataYaml;
     console.log('type', typeof dataYaml);
     console.log('data ', dataYaml);
-    try {
-      const response = await axios.post(
-        'http://139.177.184.45:31006/model/train',
-        dataModel,
-        {
-          params: {
-            token: 'rasaToken',
-          },
-          headers: {
-            'Content-Type': 'application/yaml',
-            Accept: '*',
-          },
-        },
-      );
-      console.log('response ::::: ', response);
-      return response.data;
-    } catch (error) {
-      console.log('bị lỗi ::::::::::', error);
-      return error;
-    }
+    // try {
+    //   const response = await axios.post(
+    //     'http://139.177.184.45:31006/model/train',
+    //     dataModel,
+    //     {
+    //       params: {
+    //         token: 'rasaToken',
+    //       },
+    //       headers: {
+    //         'Content-Type': 'application/yaml',
+    //         Accept: '*',
+    //       },
+    //     },
+    //   );
+    //   console.log('response ::::: ', response);
+    //   return response.data;
+    // } catch (error) {
+    //   console.log('bị lỗi ::::::::::', error);
+    //   return error;
+    // }
+    return dataModel;
   }
 
   async parseMessage(data: dataParseMessage): Promise<any[]> {
