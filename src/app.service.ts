@@ -125,7 +125,7 @@ export class MongoService {
       {},
     );
     console.log('data1 ', dataJson);
-    const dataYaml = YAML.stringify(dataJson);
+    const dataYaml = YAML.stringify(dataJson, { indent: 2, lineWidth: -1 });
 
     // const dataModel = JSON.parse(dataYaml);
     const dataModel = dataYaml;
@@ -133,7 +133,7 @@ export class MongoService {
     console.log('data ', dataYaml);
     // try {
     //   const response = await axios.post(
-    //     'http://139.177.184.45:31006/model/train',
+    //     'http://118.70.132.104:31631/model/train',
     //     dataModel,
     //     {
     //       params: {
@@ -163,7 +163,7 @@ export class MongoService {
 
     try {
       const response = await axios.post(
-        'http://139.177.184.45:31006/model/parse',
+        'http://118.70.132.104:31631/model/parse',
         data,
         {
           params: {

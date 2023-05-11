@@ -17,7 +17,11 @@ export class StoriesController {
 
   @Get('/getList')
   async index() {
-    return await this.service.findAll();
+    try {
+      return await this.service.findAll();
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   @Get(':id')
