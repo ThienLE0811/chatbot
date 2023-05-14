@@ -131,28 +131,29 @@ export class MongoService {
     const dataModel = dataYaml;
     console.log('type', typeof dataYaml);
     console.log('data ', dataYaml);
-    try {
-      const response = await axios.post(
-        'http://118.70.132.104:31631/model/train',
-        dataModel,
-        {
-          params: {
-            token: 'rasaToken',
-          },
-          headers: {
-            'Content-Type': 'application/yaml',
-            Accept: '*',
-          },
-        },
-      );
-      console.log('Train thành công');
-      console.log('response ::::: ', response.headers.filename);
-      return response.data;
-    } catch (error) {
-      console.log('bị lỗi ::::::::::', error);
-      return error;
-    }
-    // return dataModel;
+    console.log(process.env.RASA_URL);
+    // try {
+    //   const response = await axios.post(
+    //     `${process.env.RASA_URL}/model/train`,
+    //     dataModel,
+    //     {
+    //       params: {
+    //         token: 'rasaToken',
+    //       },
+    //       headers: {
+    //         'Content-Type': 'application/yaml',
+    //         Accept: '*',
+    //       },
+    //     },
+    //   );
+    //   console.log('Train thành công');
+    //   console.log('response ::::: ', response.headers.filename);
+    //   return response.data;
+    // } catch (error) {
+    //   console.log('bị lỗi ::::::::::', error);
+    //   return error;
+    // }
+    return dataModel;
   }
 
   async parseMessage(data: dataParseMessage): Promise<any[]> {
@@ -164,7 +165,7 @@ export class MongoService {
 
     try {
       const response = await axios.post(
-        'http://118.70.132.104:31631/model/parse',
+        `${process.env.RASA_URL}/model/parse`,
         data,
         {
           params: {
