@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Req, Res } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 import axios from 'axios';
@@ -129,31 +129,46 @@ export class MongoService {
 
     // const dataModel = JSON.parse(dataYaml);
     const dataModel = dataYaml;
-    console.log('type', typeof dataYaml);
-    console.log('data ', dataYaml);
-    console.log(process.env.RASA_URL);
-    // try {
-    //   const response = await axios.post(
-    //     `${process.env.RASA_URL}/model/train`,
-    //     dataModel,
-    //     {
-    //       params: {
-    //         token: 'rasaToken',
-    //       },
-    //       headers: {
-    //         'Content-Type': 'application/yaml',
-    //         Accept: '*',
-    //       },
-    //     },
-    //   );
-    //   console.log('Train thành công');
-    //   console.log('response ::::: ', response.headers.filename);
-    //   return response.data;
-    // } catch (error) {
-    //   console.log('bị lỗi ::::::::::', error);
-    //   return error;
-    // }
+    // console.log('type', typeof dataYaml);
+    // console.log('data ', dataYaml);
+    // console.log(process.env.RASA_URL);
+    try {
+      const response = await axios.post(
+        `${process.env.RASA_URL}/model/train`,
+        dataModel,
+        {
+          params: {
+            token: 'rasaToken',
+            callback_url: 'http://localhost:8000/callback_url',
+          },
+          headers: {
+            'Content-Type': 'application/yaml',
+            Accept: '*',
+          },
+        },
+      );
+
+      console.log('response:: ', response);
+      console.log('Train thành công');
+      console.log('fileName ::::: ', response.headers.filename);
+      return response.data;
+    } catch (error) {
+      console.log('bị lỗi ::::::::::', error);
+      return error;
+    }
     return dataModel;
+  }
+
+  async callBackUrl(@Res() response: any) {
+    try {
+      const callbackData = response;
+      console.log('callbackData:: ', callbackData);
+
+      return callbackData;
+    } catch (error) {
+      console.log('bị lỗi ::::::::::', error);
+      return error;
+    }
   }
 
   async parseMessage(data: dataParseMessage): Promise<any[]> {
@@ -182,7 +197,7 @@ export class MongoService {
       return response.data;
     } catch (error) {
       console.log('bị lỗi ::::::::::', error);
-      return [];
+      return error;
     }
   }
 }

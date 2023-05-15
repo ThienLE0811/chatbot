@@ -8,11 +8,11 @@
 //   }
 // }
 
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { MongoService } from './app.service';
 interface dataParseMessage {
-  text: string,
-  message_id: string
+  text: string;
+  message_id: string;
 }
 @Controller()
 export class AppController {
@@ -33,4 +33,8 @@ export class AppController {
     return this.mongoService.parseMessage(data);
   }
 
+  @Get('/callback_url')
+  async callBackUrl(@Res() response: any): Promise<string[]> {
+    return this.mongoService.callBackUrl(response);
+  }
 }
