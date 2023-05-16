@@ -8,14 +8,18 @@ import { RolesModule } from './auth/role_services/role_permission.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt_authGuard/jwt-auth.guard';
 import { MongoService } from './app.service';
-import { MyMiddleware } from './auth/middleware/my.middleware';
-
-
+// import { MyMiddleware } from './auth/middleware/my.middleware';
 
 @Module({
-  imports: [MongooseModule.forRoot('mongodb+srv://backend:backend@cluster0.tprqz.mongodb.net/?retryWrites=true&w=majority'), UsersModule,BotModule,RolesModule
-],
-  controllers: [AppController,BotController],
+  imports: [
+    MongooseModule.forRoot(
+      'mongodb+srv://backend:backend@cluster0.tprqz.mongodb.net/?retryWrites=true&w=majority',
+    ),
+    UsersModule,
+    BotModule,
+    RolesModule,
+  ],
+  controllers: [AppController, BotController],
   providers: [MongoService],
   // providers: [
   //   {
@@ -24,10 +28,12 @@ import { MyMiddleware } from './auth/middleware/my.middleware';
   //   },
   // ],
 })
-export class AppModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(MyMiddleware)
-      .forRoutes('*');
-  }
-}
+export class AppModule {}
+
+// export class AppModule implements NestModule {
+//   configure(consumer: MiddlewareConsumer) {
+//     consumer
+//       .apply(MyMiddleware)
+//       .forRoutes('*');
+//   }
+// }

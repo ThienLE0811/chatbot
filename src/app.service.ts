@@ -139,7 +139,7 @@ export class MongoService {
         {
           params: {
             token: 'rasaToken',
-            callback_url: 'http://localhost:8000/callback_url',
+            callback_url: `${process.env.CALLBACK_URL}`,
           },
           headers: {
             'Content-Type': 'application/yaml',
