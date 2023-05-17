@@ -42,15 +42,16 @@ export class AppController {
     return this.mongoService.parseMessage(data);
   }
 
-  @Get('/callback_url')
+  @Post('/callback_url')
   async callBackUrl(
     @Body() body: any,
     @Headers() header: Record<string, unknown>,
-    @Res() res: Record<string, unknown>,
+    @Req() request: Record<string, unknown>,
   ): Promise<string[]> {
     console.log('body: ', body);
     console.log('headers ', header);
+    console.log('req::::::  ', request);
 
-    return;
+    return body;
   }
 }
