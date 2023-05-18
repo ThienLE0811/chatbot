@@ -120,7 +120,50 @@ export class MongoService {
     });
 
     const result = await Promise.all(dataPromises);
-    const dataJson = result.reduce(
+    const pipeline = {
+      pipeline: [
+        {
+          name: 'WhitespaceTokenizer',
+        },
+        {
+          name: 'RegexFeaturizer',
+        },
+        {
+          name: 'LexicalSyntacticFeaturizer',
+        },
+        {
+          name: 'CountVectorsFeaturizer',
+        },
+        {
+          name: 'CountVectorsFeaturizer',
+          analyzer: 'char_wb',
+          min_ngram: 1,
+          max_ngram: 4,
+        },
+        {
+          name: 'DIETClassifier',
+          epochs: 100,
+        },
+      ],
+    };
+    const policies = {
+      policies: [
+        {
+          name: 'MemoizationPolicy',
+        },
+        {
+          name: 'TEDPolicy',
+          max_history: 5,
+          epochs: 10,
+        },
+        {
+          name: 'RulePolicy',
+        },
+      ],
+    };
+
+    const newData = [pipeline, policies, ...result];
+    const dataJson = newData.reduce(
       (acc: any, curr) => ({ ...acc, ...curr }),
       {},
     );
@@ -156,7 +199,7 @@ export class MongoService {
       console.log('bị lỗi ::::::::::', error);
       return error;
     }
-    return dataModel;
+    return newData;
   }
 
   async callBackUrl(@Res() response: any) {

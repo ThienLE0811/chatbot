@@ -25,6 +25,9 @@ import { Stories, StoriesSchema } from './stories/schema/stories.schema';
 import { Actions, ActionsSchema } from './actions/schema/action.schema';
 import { ActionsController } from './actions/action.controller';
 import { ActionsService } from './actions/action.service';
+import { RulesService } from './rules/rules.service';
+import { RulesController } from './rules/rules.controller';
+import { Rules, RulesSchema } from './rules/schema/rules.schema';
 
 @Module({
   imports: [
@@ -37,6 +40,7 @@ import { ActionsService } from './actions/action.service';
       { name: Nlu.name, schema: NluSchema },
       { name: Stories.name, schema: StoriesSchema },
       { name: Actions.name, schema: ActionsSchema },
+      { name: Rules.name, schema: RulesSchema },
     ]),
   ],
   controllers: [
@@ -49,6 +53,7 @@ import { ActionsService } from './actions/action.service';
     NluController,
     StoriesController,
     ActionsController,
+    RulesController,
   ],
   providers: [
     ResponsesService,
@@ -59,6 +64,7 @@ import { ActionsService } from './actions/action.service';
     NluService,
     StoriesService,
     ActionsService,
+    RulesService,
   ],
 })
 export class BotModule {}

@@ -14,11 +14,13 @@ import {
   Get,
   Header,
   Headers,
+  Param,
   Post,
   Req,
   Res,
 } from '@nestjs/common';
 import { MongoService } from './app.service';
+import { zip } from 'rxjs/operators';
 interface dataParseMessage {
   text: string;
   message_id: string;
@@ -47,10 +49,11 @@ export class AppController {
     @Body() body: any,
     @Headers() header: Record<string, unknown>,
     @Req() request: Record<string, unknown>,
+    @Res() res: Record<string, unknown>,
+    // @Param('Files') File: Record<string, unknown>,
   ): Promise<string[]> {
     console.log('body: ', body);
     console.log('headers ', header);
-    console.log('req::::::  ', request);
 
     return body;
   }
