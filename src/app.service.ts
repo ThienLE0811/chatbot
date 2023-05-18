@@ -162,6 +162,9 @@ export class MongoService {
       ],
     };
 
+    // const pipeline = { pipeline: [] };
+    // const policies = { policies: [] };
+
     const newData = [pipeline, policies, ...result];
     const dataJson = newData.reduce(
       (acc: any, curr) => ({ ...acc, ...curr }),
@@ -174,32 +177,34 @@ export class MongoService {
     const dataModel = dataYaml;
     // console.log('type', typeof dataYaml);
     // console.log('data ', dataYaml);
-    // console.log(process.env.RASA_URL);
-    try {
-      const response = await axios.post(
-        `${process.env.RASA_URL}/model/train`,
-        dataModel,
-        {
-          params: {
-            token: 'rasaToken',
-            callback_url: `${process.env.CALLBACK_URL}`,
-          },
-          headers: {
-            'Content-Type': 'application/yaml',
-            Accept: '*',
-          },
-        },
-      );
+    console.log(process.env.CALLBACK_URL);
+    // try {
+    //   const response = await axios.post(
+    //     `${process.env.RASA_URL}/model/train`,
+    //     dataModel,
+    //     {
+    //       params: {
+    //         token: 'rasaToken',
+    //         // callback_url: `${process.env.CALLBACK_URL}`,
+    //         callback_url:
+    //           'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
+    //       },
+    //       headers: {
+    //         'Content-Type': 'application/yaml',
+    //         Accept: '*',
+    //       },
+    //     },
+    //   );
 
-      console.log('response:: ', response);
-      console.log('Train thành công');
-      console.log('fileName ::::: ', response.headers.filename);
-      return response.data;
-    } catch (error) {
-      console.log('bị lỗi ::::::::::', error);
-      return error;
-    }
-    return newData;
+    //   console.log('response:: ', response);
+    //   console.log('Train thành công');
+    //   console.log('fileName ::::: ', response.headers.filename);
+    //   return response.data;
+    // } catch (error) {
+    //   console.log('bị lỗi ::::::::::', error);
+    //   return error;
+    // }
+    return dataModel;
   }
 
   async callBackUrl(@Res() response: any) {
