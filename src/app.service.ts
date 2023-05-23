@@ -120,53 +120,58 @@ export class MongoService {
     });
 
     const result = await Promise.all(dataPromises);
-    const pipeline = {
-      pipeline: [
-        {
-          name: 'WhitespaceTokenizer',
-        },
-        {
-          name: 'RegexFeaturizer',
-        },
-        {
-          name: 'LexicalSyntacticFeaturizer',
-        },
-        {
-          name: 'CountVectorsFeaturizer',
-        },
-        {
-          name: 'CountVectorsFeaturizer',
-          analyzer: 'char_wb',
-          min_ngram: 1,
-          max_ngram: 4,
-        },
-        {
-          name: 'DIETClassifier',
-          epochs: 100,
-        },
-      ],
-    };
-    const policies = {
-      policies: [
-        {
-          name: 'MemoizationPolicy',
-        },
-        {
-          name: 'TEDPolicy',
-          max_history: 5,
-          epochs: 10,
-        },
-        {
-          name: 'RulePolicy',
-        },
-      ],
-    };
+    // const pipeline = {
+    //   pipeline: [
+    //     {
+    //       name: 'WhitespaceTokenizer',
+    //     },
+    //     {
+    //       name: 'RegexFeaturizer',
+    //     },
+    //     {
+    //       name: 'LexicalSyntacticFeaturizer',
+    //     },
+    //     {
+    //       name: 'CountVectorsFeaturizer',
+    //     },
+    //     {
+    //       name: 'CountVectorsFeaturizer',
+    //       analyzer: 'char_wb',
+    //       min_ngram: 1,
+    //       max_ngram: 4,
+    //     },
+    //     {
+    //       name: 'DIETClassifier',
+    //       epochs: 100,
+    //     },
+    //   ],
+    // };
+    // const policies = {
+    //   policies: [
+    //     {
+    //       name: 'MemoizationPolicy',
+    //     },
+    //     {
+    //       name: 'TEDPolicy',
+    //       max_history: 5,
+    //       epochs: 10,
+    //     },
+    //     {
+    //       name: 'RulePolicy',
+    //     },
+    //   ],
+    // };
 
     // const pipeline = { pipeline: [] };
     // const policies = { policies: [] };
 
-    const newData = [pipeline, policies, ...result];
-    const dataJson = newData.reduce(
+    // const newData = [pipeline, policies, ...result];
+    // const dataJson = newData.reduce(
+    //   (acc: any, curr) => ({ ...acc, ...curr }),
+    //   {},
+    // );
+
+    const dataJson = result.reduce(
       (acc: any, curr) => ({ ...acc, ...curr }),
       {},
     );
@@ -177,33 +182,51 @@ export class MongoService {
     const dataModel = dataYaml;
     // console.log('type', typeof dataYaml);
     // console.log('data ', dataYaml);
-    console.log(process.env.CALLBACK_URL);
-    // try {
-    //   const response = await axios.post(
-    //     `${process.env.RASA_URL}/model/train`,
-    //     dataModel,
-    //     {
-    //       params: {
-    //         token: 'rasaToken',
-    //         // callback_url: `${process.env.CALLBACK_URL}`,
-    //         callback_url:
-    //           'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
-    //       },
-    //       headers: {
-    //         'Content-Type': 'application/yaml',
-    //         Accept: '*',
-    //       },
-    //     },
-    //   );
+    // console.log(process.env.CALLBACK_URL);
+    try {
+      const response = await axios.post(
+        `${process.env.RASA_URL}/model/train`,
+        dataModel,
+        {
+          params: {
+            token: 'rasaToken',
+            // callback_url: `${process.env.CALLBACK_URL}`,
+            // callback_url:
+            //   'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
+          },
+          headers: {
+            'Content-Type': 'application/yaml',
+            Accept: '*',
+          },
+        },
+      );
 
-    //   console.log('response:: ', response);
-    //   console.log('Train thành công');
-    //   console.log('fileName ::::: ', response.headers.filename);
-    //   return response.data;
-    // } catch (error) {
-    //   console.log('bị lỗi ::::::::::', error);
-    //   return error;
-    // }
+      const dataReplace = {
+        model_file: `/app/models/${response.headers.filename}`,
+      };
+      console.log('dataReplace:: ', dataReplace);
+      const replace = await axios.put(
+        `${process.env.RASA_URL}/model`,
+        dataReplace,
+        {
+          params: {
+            token: 'rasaToken',
+            // callback_url: `${process.env.CALLBACK_URL}`,
+            // callback_url:
+            //   'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
+          },
+        },
+      );
+
+      console.log('replace', replace);
+      // console.log('response:: ', response);
+      // console.log('fileName ::::: ', response.headers.filename);
+
+      return response.headers;
+    } catch (error) {
+      console.log('bị lỗi ::::::::::', error);
+      return error;
+    }
     return dataModel;
   }
 
