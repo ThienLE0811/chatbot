@@ -5,18 +5,17 @@ export type SlotsDocument = HydratedDocument<Slots>;
 
 @Schema()
 export class Slots {
+  @Prop({ required: true, unique: true })
+  nameSlot: string;
 
-  @Prop({required:true})
-  nameSlot: string
-
-  @Prop({ type: []})
+  @Prop({ type: [] })
   mapping: [];
 
   // @Prop()
   // autoFill: boolean
 
   @Prop()
-  type: string
+  type: string;
 
   @Prop()
   createdAt: Date;

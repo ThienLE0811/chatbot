@@ -4,9 +4,9 @@ import { HydratedDocument } from 'mongoose';
 export type NluDocument = HydratedDocument<Nlu>;
 
 
-@Schema({collection: 'nlu'})
+@Schema({ collection: 'nlu' })
 export class Nlu {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   intent: string;
 
   @Prop({ type: [] })

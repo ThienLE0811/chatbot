@@ -1,9 +1,13 @@
 import { Injectable, Req, Res } from '@nestjs/common';
-import { InjectConnection } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import { Connection, Model } from 'mongoose';
 import axios from 'axios';
 import yaml from 'js-yaml';
 import * as YAML from 'yaml';
+import {
+  History,
+  HistoryDocument,
+} from './auth/historyTrain/schema/historys.schema';
 interface dataParseMessage {
   text: string;
   message_id: string;
@@ -11,7 +15,9 @@ interface dataParseMessage {
 
 @Injectable()
 export class MongoService {
-  constructor(@InjectConnection() private readonly connection: Connection) {}
+  constructor(
+    @InjectConnection() private readonly connection: Connection, // @InjectModel(History.name) // private trainHistoryModel: Model<HistoryDocument>,
+  ) {}
 
   async listCollections(): Promise<string[]> {
     const collections = await this.connection.db.listCollections().toArray();
@@ -180,6 +186,7 @@ export class MongoService {
 
     // const dataModel = JSON.parse(dataYaml);
     const dataModel = dataYaml;
+    // const dataModel = 2;
     // console.log('type', typeof dataYaml);
     // console.log('data ', dataYaml);
     // console.log(process.env.CALLBACK_URL);
@@ -218,9 +225,21 @@ export class MongoService {
         },
       );
 
-      console.log('replace', replace);
-      // console.log('response:: ', response);
+      // console.log('replace', replace);
+      console.log('response:: ', response);
       // console.log('fileName ::::: ', response.headers.filename);
+      if (response.status === 200) {
+        const trainHistoryModel = this.connection.model<HistoryDocument>(
+          History.name,
+        );
+        const trainHistory = new trainHistoryModel({
+          name: response.headers.filename,
+          status: 'true',
+          createdAt: response.headers.date,
+          // Các trường thông tin khác tùy ý
+        });
+        await trainHistory.save();
+      }
 
       return response.headers;
     } catch (error) {

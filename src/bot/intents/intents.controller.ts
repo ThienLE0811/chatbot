@@ -1,15 +1,26 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { CreateIntents} from './dto/create-response.dto';
-import { UpdateIntents} from './dto/update-response.dto';
-import { IntentsService} from './intents.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { get } from 'https';
+import { CreateIntents } from './dto/create-response.dto';
+import { UpdateIntents } from './dto/update-response.dto';
+import { IntentsService } from './intents.service';
 
 @Controller('intents')
 export class IntentsController {
   constructor(private readonly service: IntentsService) {}
 
-   @Get('/getList')
-  async index() {
-    return await this.service.findAll();
+  @Get('/getList')
+  async index(@Query('filters') filters: any) {
+    console.log('filters::', filters);
+    return await this.service.findAll(filters);
   }
 
   @Get(':id')
@@ -17,7 +28,7 @@ export class IntentsController {
     return await this.service.findOne(id);
   }
 
-  @Post("/create")
+  @Post('/create')
   async create(@Body() createIntents: CreateIntents) {
     return await this.service.create(createIntents);
   }
@@ -32,10 +43,3 @@ export class IntentsController {
     return await this.service.delete(id);
   }
 }
-
-
-
-
-
-
-

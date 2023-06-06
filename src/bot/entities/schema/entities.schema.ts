@@ -5,10 +5,10 @@ export type EntitiesDocument = HydratedDocument<Entities>;
 
 @Schema()
 export class Entities {
-  @Prop({required:true})
+  @Prop({ required: true, unique: true })
   nameEntities: string;
 
-  @Prop({type: []})
+  @Prop({ type: [] })
   dataEntities: [];
 
   @Prop()

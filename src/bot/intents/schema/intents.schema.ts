@@ -5,15 +5,15 @@ export type IntentsDocument = HydratedDocument<Intents>;
 
 @Schema()
 export class Intents {
-  @Prop({required:true})
+  @Prop({ required: true, unique: true })
   title: string;
 
-  @Prop({type: []})
+  @Prop({ type: [] })
   examples: [];
 
   @Prop()
   description: string;
-  
+
   @Prop()
   createdAt: Date;
 

@@ -5,7 +5,7 @@ export type StoriesDocument = HydratedDocument<Stories>;
 
 @Schema()
 export class Stories {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   story: string;
 
   @Prop({ type: [] })
