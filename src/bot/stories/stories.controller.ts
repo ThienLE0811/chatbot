@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CreateStories } from './dto/create-stories.dto';
 import { UpdateStories } from './dto/update-stories.dto';
@@ -16,9 +17,9 @@ export class StoriesController {
   constructor(private readonly service: StoriesService) {}
 
   @Get('/getList')
-  async index() {
+  async index(@Query('filters') filters: any) {
     try {
-      return await this.service.findAll();
+      return await this.service.findAll(filters);
     } catch (error) {
       console.log(error);
     }

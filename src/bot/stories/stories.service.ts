@@ -11,8 +11,15 @@ export class StoriesService {
     @InjectModel(Stories.name) private readonly model: Model<StoriesDocument>,
   ) {}
 
-  async findAll(): Promise<Stories[]> {
-    return await this.model.find().exec();
+  async findAll(value: any): Promise<Stories[]> {
+    if (!value) {
+      return await this.model.find().exec();
+    }
+
+    const stories = await this.model.find({ story: value }).exec();
+
+    return stories;
+    // return await this.model.find().exec();
   }
 
   async findOne(id: string): Promise<Stories> {

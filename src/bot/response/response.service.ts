@@ -12,8 +12,14 @@ export class ResponsesService {
     private readonly model: Model<ResponsesDocument>,
   ) {}
 
-  async findAll(): Promise<Responses[]> {
-    return await this.model.find().exec();
+  async findAll(value: any): Promise<Responses[]> {
+    if (!value) {
+      return await this.model.find().exec();
+    }
+
+    const responses = await this.model.find({ title: value }).exec();
+
+    return responses;
   }
 
   async findOne(id: string): Promise<Responses> {

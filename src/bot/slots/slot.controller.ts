@@ -1,15 +1,24 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import {  CreateSlots } from './dto/create-slot.dto';
-import {  UpdateSlots } from './dto/update-slot.dto';
-import {  SlotsService } from './slot.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { CreateSlots } from './dto/create-slot.dto';
+import { UpdateSlots } from './dto/update-slot.dto';
+import { SlotsService } from './slot.service';
 
 @Controller('slots')
 export class SlotController {
   constructor(private readonly service: SlotsService) {}
 
-   @Get('getList')
-  async index() {
-    return await this.service.findAll();
+  @Get('getList')
+  async index(@Query('filters') filters: any) {
+    return await this.service.findAll(filters);
   }
 
   @Get(':id')
@@ -32,10 +41,3 @@ export class SlotController {
     return await this.service.delete(id);
   }
 }
-
-
-
-
-
-
-

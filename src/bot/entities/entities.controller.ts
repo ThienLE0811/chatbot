@@ -1,15 +1,24 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { CreateEntities} from './dto/create-entities.dto';
-import { UpdateEntities} from './dto/update-entities.dto';
-import { EntitiesService} from './entities.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
+import { CreateEntities } from './dto/create-entities.dto';
+import { UpdateEntities } from './dto/update-entities.dto';
+import { EntitiesService } from './entities.service';
 
 @Controller('entities')
 export class EntitiesController {
   constructor(private readonly service: EntitiesService) {}
 
-   @Get('/getList')
-  async index() {
-    return await this.service.findAll();
+  @Get('/getList')
+  async index(@Query('filters') filters: any) {
+    return await this.service.findAll(filters);
   }
 
   @Get(':id')
@@ -17,13 +26,16 @@ export class EntitiesController {
     return await this.service.findOne(id);
   }
 
-  @Post("/create")
+  @Post('/create')
   async create(@Body() createEntities: CreateEntities) {
     return await this.service.create(createEntities);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateEntities: UpdateEntities) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateEntities: UpdateEntities,
+  ) {
     return await this.service.update(id, updateEntities);
   }
 
@@ -32,10 +44,3 @@ export class EntitiesController {
     return await this.service.delete(id);
   }
 }
-
-
-
-
-
-
-

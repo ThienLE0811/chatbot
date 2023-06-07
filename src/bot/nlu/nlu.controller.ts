@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CreateNlu } from './dto/create-nlu.dto';
 import { UpdateNlu } from './dto/update-nlu.dto';
@@ -16,8 +17,8 @@ export class NluController {
   constructor(private readonly service: NluService) {}
 
   @Get('/getList')
-  async index() {
-    return await this.service.findAll();
+  async index(@Query('filters') filters: any) {
+    return await this.service.findAll(filters);
   }
 
   @Get(':id')

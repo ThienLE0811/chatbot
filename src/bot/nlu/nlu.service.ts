@@ -11,8 +11,15 @@ export class NluService {
     @InjectModel(Nlu.name) private readonly model: Model<NluDocument>,
   ) {}
 
-  async findAll(): Promise<Nlu[]> {
-    return await this.model.find().exec();
+  async findAll(value: any): Promise<Nlu[]> {
+    if (!value) {
+      return await this.model.find().exec();
+    }
+
+    const intents = await this.model.find({ intent: value }).exec();
+    console.log('intents', intents);
+    return intents;
+    // return await this.model.find().exec();
   }
 
   async findOne(id: string): Promise<Nlu> {
