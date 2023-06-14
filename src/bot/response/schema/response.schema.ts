@@ -5,7 +5,7 @@ export type ResponsesDocument = HydratedDocument<Responses>;
 
 @Schema()
 export class Responses {
-  @Prop({ required: true, unique: true, index: true })
+  @Prop({ required: true, unique: true })
   title: string;
 
   @Prop()
