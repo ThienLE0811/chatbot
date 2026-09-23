@@ -1,35 +1,33 @@
-
-import { IsEmail, IsNotEmpty,IsString,IsDate } from 'class-validator';
-
+import { IsEmail, IsNotEmpty, IsString, IsDate } from 'class-validator';
 
 export class UserDto {
-    @IsString({})
-    userName: string;
+  @IsString({})
+  userName: string;
 
-    @IsString()
-    password: string;
+  @IsString()
+  password: string;
 
-    @IsString()
-    firstName: string;
+  @IsString()
+  firstName: string;
 
-    @IsString()
-    lastName: string;
-    
-    @IsEmail()
-    email: string;
+  @IsString()
+  lastName: string;
 
-    @IsString()
-    userRole: {}
+  @IsEmail()
+  email: string;
 
-    @IsString()
-    userRoleName: string
+  @IsString()
+  userRole: {};
 
-    @IsString()
-    userGroup: string
+  @IsString()
+  userRoleName: string;
 
-    @IsDate()
-    createdAt: Date;
+  @IsString()
+  userGroup: string;
 
-    @IsDate()
-    updateAt: Date;
+  @IsDate()
+  createdAt: Date;
+
+  @IsDate()
+  updateAt: Date;
 }
