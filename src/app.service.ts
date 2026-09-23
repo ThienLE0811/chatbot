@@ -196,7 +196,7 @@ export class MongoService {
         dataModel,
         {
           params: {
-            token: 'rasaToken',
+            token: process.env.RASA_TOKEN,
             // callback_url: `${process.env.CALLBACK_URL}`,
             // callback_url:
             //   'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
@@ -217,7 +217,7 @@ export class MongoService {
         dataReplace,
         {
           params: {
-            token: 'rasaToken',
+            token: process.env.RASA_TOKEN,
             // callback_url: `${process.env.CALLBACK_URL}`,
             // callback_url:
             //   'https://webhook.site/bd053536-afc3-4751-af11-bde0a542a546',
@@ -274,7 +274,7 @@ export class MongoService {
         data,
         {
           params: {
-            token: 'rasaToken',
+            token: process.env.RASA_TOKEN,
           },
           headers: {
             'Content-Type': 'application/json',

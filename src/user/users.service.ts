@@ -89,7 +89,6 @@ export class UsersService {
 
   async createToken(user: LoginDto) {
     const payload = { username: user.userName };
-    console.log(process.env.SECRET_KEY);
     const token = sign(payload, process.env.SECRET_KEY, {
       expiresIn: '1h',
       audience: user.userName,
