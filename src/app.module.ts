@@ -13,6 +13,7 @@ import { HistoryController } from './auth/historyTrain/history.controller';
 import { HistoryModule } from './auth/historyTrain/history.module';
 import { HistoryService } from './auth/historyTrain/history.service';
 import { HistorySchema } from './auth/historyTrain/schema/historys.schema';
+import { TrainingModule } from './training/training.module';
 // import { MyMiddleware } from './auth/middleware/my.middleware';
 
 @Module({
@@ -28,6 +29,7 @@ import { HistorySchema } from './auth/historyTrain/schema/historys.schema';
     BotModule,
     RolesModule,
     HistoryModule,
+    TrainingModule,
   ],
   controllers: [AppController, BotController],
   providers: [MongoService],

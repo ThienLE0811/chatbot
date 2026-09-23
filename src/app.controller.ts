@@ -20,6 +20,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { MongoService } from './app.service';
+import { TrainingDataExporter } from './training/data/training-data.exporter';
 import { zip } from 'rxjs/operators';
 interface dataParseMessage {
   text: string;
@@ -27,16 +28,25 @@ interface dataParseMessage {
 }
 @Controller()
 export class AppController {
-  constructor(private readonly mongoService: MongoService) {}
+  constructor(
+    private readonly mongoService: MongoService,
+    private readonly exporter: TrainingDataExporter,
+  ) {}
 
   @Get('/')
   async getCollections(): Promise<string[]> {
     return this.mongoService.listCollections();
   }
 
+  /**
+   * Preview of the YAML sent to Rasa. Training no longer happens here; it is
+   * queued with POST /train.
+   */
   @Get('/getAllData')
-  async getAllData(): Promise<string[]> {
-    return this.mongoService.getAllData();
+  @Header('Content-Type', 'application/yaml; charset=utf-8')
+  async getAllData(): Promise<string> {
+    const dataset = await this.exporter.load();
+    return this.exporter.toRasaYaml(dataset);
   }
 
   @Post('/parseMessage')
