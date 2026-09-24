@@ -15,6 +15,7 @@ import { HistoryService } from './auth/historyTrain/history.service';
 import { HistorySchema } from './auth/historyTrain/schema/historys.schema';
 import { TrainingModule } from './training/training.module';
 import { ChatTestModule } from './chat-test/chat-test.module';
+import { TelegramModule } from './telegram/telegram.module';
 // import { MyMiddleware } from './auth/middleware/my.middleware';
 
 @Module({
@@ -32,6 +33,7 @@ import { ChatTestModule } from './chat-test/chat-test.module';
     HistoryModule,
     TrainingModule,
     ChatTestModule,
+    TelegramModule,
   ],
   controllers: [AppController, BotController],
   providers: [MongoService],
