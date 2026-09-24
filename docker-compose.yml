@@ -23,8 +23,13 @@ services:
     user: root
     environment:
       RASA_TELEMETRY_ENABLED: 'false'
+      # Rasa caches each trained component (DIET, TED...) and reuses it when its
+      # inputs did not change, e.g. only stories were edited. Kept in a volume so
+      # the cache survives the container being recreated.
+      RASA_CACHE_DIRECTORY: /app/.rasa/cache
     volumes:
       - rasa-models:/app/models
+      - rasa-cache:/app/.rasa/cache
       - ./rasa/credentials.yml:/app/credentials.yml:ro
     command: >
       run --enable-api --cors "*"
@@ -36,3 +41,4 @@ services:
 volumes:
   redis-data:
   rasa-models:
+  rasa-cache:

@@ -27,6 +27,12 @@ export function isValidModelFile(name: string): boolean {
   return MODEL_FILE_PATTERN.test(name);
 }
 
+/** Rasa reports the model as a path, e.g. /app/models/x.tar.gz. */
+export function modelFileName(path: string | null): string | null {
+  if (!path) return null;
+  return path.split(/[\\/]/).pop() ?? null;
+}
+
 @Injectable()
 export class RasaClient {
   private readonly http: AxiosInstance;

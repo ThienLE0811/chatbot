@@ -33,6 +33,8 @@ import {
 
 export interface TrainJobPayload {
   trainJobId: string;
+  /** Train even when the data matches the model already running. */
+  force?: boolean;
 }
 
 export type TrainStreamMessage =
@@ -85,7 +87,10 @@ export class TrainJobsService implements OnApplicationBootstrap {
     }
   }
 
-  async enqueue(triggeredBy?: string): Promise<TrainJobDocument> {
+  async enqueue(
+    triggeredBy?: string,
+    { force = false }: { force?: boolean } = {},
+  ): Promise<TrainJobDocument> {
     let job: TrainJobDocument;
     try {
       // The first log entry is written with the document, before the job
@@ -123,7 +128,7 @@ export class TrainJobsService implements OnApplicationBootstrap {
       await withTimeout(
         this.queue.add(
           TRAIN_JOB_NAME,
-          { trainJobId: id },
+          { trainJobId: id, force },
           { jobId: id, removeOnComplete: 200, removeOnFail: 200 },
         ),
         ENQUEUE_TIMEOUT_MS,
@@ -166,9 +171,20 @@ export class TrainJobsService implements OnApplicationBootstrap {
   /** Jobs that produced a model file, which are the versions that can be activated. */
   findWithModels() {
     return this.model
-      .find({ modelFile: { $exists: true } }, JOB_LIST_PROJECTION)
+      .find(
+        { modelFile: { $exists: true }, reusedModel: { $ne: true } },
+        JOB_LIST_PROJECTION,
+      )
       .sort({ createdAt: -1 })
       .lean();
+  }
+
+  /** Hash of the data a model was trained on; null for unknown or legacy models. */
+  async dataHashOf(modelFile: string): Promise<string | null> {
+    const job = await this.model
+      .findOne({ modelFile, dataHash: { $exists: true } }, { dataHash: 1 })
+      .lean();
+    return job?.dataHash ?? null;
   }
 
   async hasModel(modelFile: string): Promise<boolean> {
@@ -259,6 +275,34 @@ export class TrainJobsService implements OnApplicationBootstrap {
       modelFile,
       at: finishedAt.toISOString(),
     });
+    await this.events.publish({
+      type: 'done',
+      jobId: id,
+      status: TrainStatus.Loaded,
+    });
+  }
+
+  /** Finishes a job whose data matches the running model, without training. */
+  async completeUnchanged(
+    id: string,
+    modelFile: string,
+    dataHash: string,
+    startedAt: Date,
+  ) {
+    const finishedAt = new Date();
+    await this.transition(
+      id,
+      TrainStatus.Loaded,
+      `Dữ liệu không thay đổi so với model đang chạy ${modelFile}, bỏ qua train`,
+      {
+        modelFile,
+        reusedModel: true,
+        dataHash,
+        finishedAt,
+        durationMs: finishedAt.getTime() - startedAt.getTime(),
+      },
+    );
+    await this.release(id);
     await this.events.publish({
       type: 'done',
       jobId: id,

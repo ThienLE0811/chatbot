@@ -29,6 +29,8 @@ describe('TrainProcessor', () => {
       recordValidation: jest.fn().mockResolvedValue(undefined),
       complete: jest.fn().mockResolvedValue(undefined),
       fail: jest.fn().mockResolvedValue(undefined),
+      dataHashOf: jest.fn().mockResolvedValue(null),
+      completeUnchanged: jest.fn().mockResolvedValue(undefined),
     };
     exporter = {
       load: jest.fn().mockResolvedValue({}),
@@ -117,6 +119,52 @@ describe('TrainProcessor', () => {
       { message: 'Rasa train thất bại (HTTP 500)', details: { status: 500 } },
       expect.any(Date),
     );
+  });
+
+  describe('when a model is already running', () => {
+    beforeEach(() => {
+      rasa.status.mockResolvedValue({ model_file: '/app/models/m0.tar.gz' });
+    });
+
+    it('reuses it without training when the data is unchanged', async () => {
+      jobs.dataHashOf.mockResolvedValue('abc');
+
+      await expect(processor.process(job)).resolves.toEqual({
+        modelFile: 'm0.tar.gz',
+      });
+
+      expect(jobs.dataHashOf).toHaveBeenCalledWith('m0.tar.gz');
+      expect(rasa.train).not.toHaveBeenCalled();
+      expect(rasa.loadModel).not.toHaveBeenCalled();
+      expect(jobs.completeUnchanged).toHaveBeenCalledWith(
+        'job-1',
+        'm0.tar.gz',
+        'abc',
+        expect.any(Date),
+      );
+      expect(jobs.complete).not.toHaveBeenCalled();
+    });
+
+    it('trains when the data changed', async () => {
+      jobs.dataHashOf.mockResolvedValue('old-hash');
+
+      await processor.process(job);
+
+      expect(rasa.train).toHaveBeenCalled();
+      expect(jobs.completeUnchanged).not.toHaveBeenCalled();
+    });
+
+    it('trains unchanged data when forced', async () => {
+      jobs.dataHashOf.mockResolvedValue('abc');
+
+      await processor.process({
+        data: { trainJobId: 'job-1', force: true },
+      } as any);
+
+      expect(rasa.train).toHaveBeenCalled();
+      expect(jobs.complete).toHaveBeenCalled();
+      expect(jobs.completeUnchanged).not.toHaveBeenCalled();
+    });
   });
 
   it('skips jobs that already finished', async () => {

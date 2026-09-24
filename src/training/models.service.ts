@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
-import { RasaClient, isValidModelFile } from './rasa/rasa.client';
+import {
+  RasaClient,
+  isValidModelFile,
+  modelFileName,
+} from './rasa/rasa.client';
 import { TrainEventsService } from './train-events.service';
 import { TrainJobsService } from './train-jobs.service';
 import { TrainStatus } from './training.constants';
@@ -99,7 +103,7 @@ export class ModelsService {
       throw new BadGatewayException(error.message);
     });
     return {
-      modelFile: basename(status.model_file),
+      modelFile: modelFileName(status.model_file),
       modelId: status.model_id,
       activeTrainingJobs: status.num_active_training_jobs,
     };
@@ -131,7 +135,7 @@ export class ModelsService {
   private async activeModel(): Promise<string | null | undefined> {
     try {
       const status = await this.rasa.status();
-      return basename(status.model_file);
+      return modelFileName(status.model_file);
     } catch {
       return undefined;
     }
@@ -153,10 +157,4 @@ export class ModelsService {
       .find({}, { projection: { name: 1, status: 1, createdAt: 1 } })
       .toArray();
   }
-}
-
-/** Rasa reports the model as a path, e.g. /app/models/x.tar.gz. */
-function basename(path: string | null): string | null {
-  if (!path) return null;
-  return path.split(/[\\/]/).pop() ?? null;
 }

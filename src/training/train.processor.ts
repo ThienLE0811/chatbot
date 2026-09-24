@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { TrainingDataExporter } from './data/training-data.exporter';
 import { TrainingDataValidator } from './data/training-data.validator';
-import { RasaClient, RasaError } from './rasa/rasa.client';
+import { RasaClient, RasaError, modelFileName } from './rasa/rasa.client';
 import { TrainJobPayload, TrainJobsService } from './train-jobs.service';
 import { TRAIN_QUEUE, TrainStatus, isTerminal } from './training.constants';
 
@@ -86,15 +86,27 @@ export class TrainProcessor extends WorkerHost {
           `${exported.stats.stories} story, ${exported.stats.rules} rule, ${report.warnings.length} cảnh báo`,
       );
 
-      const status = await this.rasa.status();
+      const activeModel = modelFileName((await this.rasa.status()).model_file);
       await this.jobs.log(
         id,
         stage,
         'info',
-        `Kết nối Rasa thành công, model đang chạy: ${
-          status.model_file ?? 'chưa có'
-        }`,
+        `Kết nối Rasa thành công, model đang chạy: ${activeModel ?? 'chưa có'}`,
       );
+
+      if (
+        !job.data.force &&
+        activeModel &&
+        (await this.jobs.dataHashOf(activeModel)) === exported.hash
+      ) {
+        await this.jobs.completeUnchanged(
+          id,
+          activeModel,
+          exported.hash,
+          startedAt,
+        );
+        return { modelFile: activeModel };
+      }
 
       stage = TrainStatus.Training;
       await this.jobs.transition(

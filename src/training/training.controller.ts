@@ -6,6 +6,7 @@ import {
   HttpStatus,
   MessageEvent,
   Param,
+  ParseBoolPipe,
   ParseIntPipe,
   Post,
   Query,
@@ -42,11 +43,16 @@ export class TrainingController {
     private readonly validator: TrainingDataValidator,
   ) {}
 
-  /** Queues a training; returns 409 with the running job's id if one is in progress. */
+  /**
+   * Queues a training; returns 409 with the running job's id if one is in
+   * progress. Unchanged data reuses the running model unless `force=true`.
+   */
   @Post()
   @HttpCode(HttpStatus.ACCEPTED)
-  start() {
-    return this.jobs.enqueue();
+  start(
+    @Query('force', new DefaultValuePipe(false), ParseBoolPipe) force: boolean,
+  ) {
+    return this.jobs.enqueue(undefined, { force });
   }
 
   /** Dry run of the checks the worker performs, without training. */

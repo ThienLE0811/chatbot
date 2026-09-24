@@ -60,6 +60,13 @@ export class TrainJob {
   @Prop({ index: true })
   modelFile?: string;
 
+  /**
+   * The data matched the model already running, so nothing was trained and
+   * `modelFile` points at that existing model.
+   */
+  @Prop()
+  reusedModel?: boolean;
+
   @Prop({ type: SchemaTypes.Mixed })
   error?: TrainJobError;
 
