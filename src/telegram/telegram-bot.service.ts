@@ -7,7 +7,7 @@ import { KeyedQueue } from './keyed-queue';
 import {
   ConversationMessage,
   ConversationMessageDocument,
-} from './schemas/conversation-message.schema';
+} from '../conversations/schemas/conversation-message.schema';
 import { TelegramApi } from './telegram.api';
 import {
   IncomingMessage,

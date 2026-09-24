@@ -4,6 +4,21 @@ import { HydratedDocument, SchemaTypes } from 'mongoose';
 export type ConversationMessageDocument = HydratedDocument<ConversationMessage>;
 
 /**
+ * What a designer decided about a user message:
+ * - wrong: the bot misunderstood it, though its confidence looked fine
+ * - added: added as an example of `intent`
+ * - ignored: nothing to learn from it
+ */
+export type ReviewStatus = 'wrong' | 'added' | 'ignored';
+
+export interface MessageReview {
+  status: ReviewStatus;
+  /** The intent the message was added to, for `added`. */
+  intent?: string;
+  at: Date;
+}
+
+/**
  * One message of a real conversation with the bot, from either side. User
  * messages keep the intent Rasa recognised, so low-confidence and fallback
  * messages can later be found and added to the training data.
@@ -39,6 +54,9 @@ export class ConversationMessage {
   @Prop()
   error?: string;
 
+  @Prop({ type: SchemaTypes.Mixed })
+  review?: MessageReview;
+
   createdAt?: Date;
 }
 
@@ -46,3 +64,4 @@ export const ConversationMessageSchema =
   SchemaFactory.createForClass(ConversationMessage);
 ConversationMessageSchema.index({ senderId: 1, createdAt: 1 });
 ConversationMessageSchema.index({ channel: 1, createdAt: -1 });
+ConversationMessageSchema.index({ from: 1, createdAt: -1 });
