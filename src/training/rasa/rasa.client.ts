@@ -9,6 +9,30 @@ export interface RasaStatus {
   num_active_training_jobs: number;
 }
 
+/** One reply of the REST channel; which fields are set depends on the response. */
+export interface RasaBotMessage {
+  recipient_id: string;
+  text?: string;
+  image?: string;
+  buttons?: { title: string; payload: string }[];
+  custom?: unknown;
+  attachment?: unknown;
+}
+
+/** A tracker event; its fields depend on `event` (user, bot, action, slot...). */
+export interface RasaEvent {
+  event: string;
+  timestamp?: number;
+  [field: string]: unknown;
+}
+
+export interface RasaTracker {
+  sender_id: string;
+  slots: Record<string, unknown>;
+  events: RasaEvent[];
+  latest_action_name?: string | null;
+}
+
 export class RasaError extends Error {
   constructor(message: string, readonly details?: unknown) {
     super(message);
@@ -19,6 +43,8 @@ export class RasaError extends Error {
 /** Rasa model files are plain names like 20260923-101500-brave-lake.tar.gz. */
 const MODEL_FILE_PATTERN = /^[\w.-]+\.tar\.gz$/;
 const STATUS_TIMEOUT_MS = 10_000;
+/** A message waits for every action it triggers, custom actions included. */
+const MESSAGE_TIMEOUT_MS = 30_000;
 const LOAD_TIMEOUT_MS = 5 * 60_000;
 const DEFAULT_TRAIN_TIMEOUT_MS = 60 * 60_000;
 const MAX_ERROR_BODY_BYTES = 64 * 1024;
@@ -113,6 +139,38 @@ export class RasaClient {
       );
     } catch (error) {
       throw await toRasaError(error, `Rasa không nạp được model ${modelFile}`);
+    }
+  }
+
+  /**
+   * Sends a user message through the REST channel, as a real channel would.
+   * Rasa answers once every action the message triggered has run. The channel
+   * swallows its own failures and answers an empty list, so read the tracker
+   * to learn what actually happened.
+   */
+  async sendMessage(senderId: string, text: string): Promise<RasaBotMessage[]> {
+    try {
+      const { data } = await this.http.post<RasaBotMessage[]>(
+        '/webhooks/rest/webhook',
+        { sender: senderId, message: text },
+        { timeout: MESSAGE_TIMEOUT_MS },
+      );
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      throw await toRasaError(error, 'Rasa không trả lời tin nhắn');
+    }
+  }
+
+  /** Conversation state and events since the last restart. */
+  async tracker(senderId: string): Promise<RasaTracker> {
+    try {
+      const { data } = await this.http.get<RasaTracker>(
+        `/conversations/${encodeURIComponent(senderId)}/tracker`,
+        { timeout: STATUS_TIMEOUT_MS },
+      );
+      return data;
+    } catch (error) {
+      throw await toRasaError(error, 'Không đọc được hội thoại từ Rasa');
     }
   }
 }
