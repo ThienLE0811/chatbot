@@ -26,6 +26,26 @@ export interface ExportedTrainingData {
   stats: TrainingDataStats;
 }
 
+/** Collections the training data is read from. */
+export const TRAINING_COLLECTIONS = [
+  'intents',
+  'entities',
+  'actions',
+  'slots',
+  'responses',
+  'nlu',
+  'stories',
+  'rules',
+] as const;
+
+export type TrainingCollection = (typeof TRAINING_COLLECTIONS)[number];
+
+/** Raw Mongo documents of every training collection. */
+export type TrainingDocuments = Record<
+  TrainingCollection,
+  Record<string, any>[]
+>;
+
 /**
  * Reads the bot collections and builds the combined domain + NLU + stories
  * YAML accepted by Rasa's POST /model/train.
@@ -39,48 +59,12 @@ export class TrainingDataExporter {
   constructor(@InjectConnection() private readonly connection: Connection) {}
 
   async load(): Promise<TrainingDataset> {
-    const [intents, entities, actions, slots, responses, nlu, stories, rules] =
-      await Promise.all([
-        this.read('intents'),
-        this.read('entities'),
-        this.read('actions'),
-        this.read('slots'),
-        this.read('responses'),
-        this.read('nlu'),
-        this.read('stories'),
-        this.read('rules'),
-      ]);
-
-    return {
-      intents: intents.map((doc) => text(doc.title)),
-      entities: entities.map((doc) => text(doc.nameEntities)),
-      actions: unique(
-        actions
-          .map((doc) => text(doc.action).replace(/^action:\s*/, ''))
-          .filter(Boolean),
+    const entries = await Promise.all(
+      TRAINING_COLLECTIONS.map(
+        async (name) => [name, await this.read(name)] as const,
       ),
-      slots: slots.map((doc) => ({
-        name: text(doc.nameSlot),
-        type: text(doc.type),
-        mappings: asArray(doc.mapping).map(pickSlotMapping),
-      })),
-      responses: responses.map((doc) => ({
-        name: text(doc.title),
-        variants: asArray(doc.data),
-      })),
-      nlu: nlu.map((doc) => ({
-        intent: text(doc.intent),
-        examples: asArray(doc.examples).map(text),
-      })),
-      stories: stories.map((doc) => ({
-        name: text(doc.story),
-        steps: asArray(doc.steps),
-      })),
-      rules: rules.map((doc) => ({
-        name: text(doc.rule),
-        steps: asArray(doc.steps),
-      })),
-    };
+    );
+    return toTrainingDataset(Object.fromEntries(entries) as TrainingDocuments);
   }
 
   toRasaYaml(dataset: TrainingDataset): string {
@@ -132,6 +116,40 @@ export class TrainingDataExporter {
       .find({}, { projection: { _id: 0, __v: 0 } })
       .toArray();
   }
+}
+
+/** Normalizes raw Mongo documents into the dataset the validator checks. */
+export function toTrainingDataset(docs: TrainingDocuments): TrainingDataset {
+  return {
+    intents: docs.intents.map((doc) => text(doc.title)),
+    entities: docs.entities.map((doc) => text(doc.nameEntities)),
+    actions: unique(
+      docs.actions
+        .map((doc) => text(doc.action).replace(/^action:\s*/, ''))
+        .filter(Boolean),
+    ),
+    slots: docs.slots.map((doc) => ({
+      name: text(doc.nameSlot),
+      type: text(doc.type),
+      mappings: asArray(doc.mapping).map(pickSlotMapping),
+    })),
+    responses: docs.responses.map((doc) => ({
+      name: text(doc.title),
+      variants: asArray(doc.data),
+    })),
+    nlu: docs.nlu.map((doc) => ({
+      intent: text(doc.intent),
+      examples: asArray(doc.examples).map(text),
+    })),
+    stories: docs.stories.map((doc) => ({
+      name: text(doc.story),
+      steps: asArray(doc.steps),
+    })),
+    rules: docs.rules.map((doc) => ({
+      name: text(doc.rule),
+      steps: asArray(doc.steps),
+    })),
+  };
 }
 
 export function computeStats(dataset: TrainingDataset): TrainingDataStats {
