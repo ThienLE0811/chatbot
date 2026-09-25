@@ -80,6 +80,23 @@ const NLU: Record<string, { description: string; examples: string[] }> = {
       'để sau nhé',
     ],
   },
+  // Bot chào tạm biệt sớm quá, người dùng vẫn còn muốn hỏi.
+  not_finished: {
+    description: 'Người dùng chưa xong, muốn hỏi tiếp',
+    examples: [
+      'tôi chưa hỏi mà',
+      'mình chưa hỏi xong',
+      'mình còn chưa hỏi gì',
+      'khoan đã',
+      'khoan, mình còn câu hỏi',
+      'chờ chút, mình muốn hỏi thêm',
+      'đừng đi vội',
+      'mình còn muốn hỏi nữa',
+      'sao đã tạm biệt rồi',
+      'ơ mình chưa nói xong',
+      'từ từ đã, mình chưa hỏi',
+    ],
+  },
   bot_challenge: {
     description: 'Người dùng hỏi đang nói chuyện với ai',
     examples: [
@@ -273,6 +290,10 @@ const RESPONSES: Record<string, unknown[]> = {
     { text: 'Tạm biệt bạn, hẹn gặp lại!' },
     { text: 'Chúc bạn một ngày tốt lành, hẹn gặp lại nhé!' },
   ],
+  utter_continue: [
+    { text: 'Dạ xin lỗi bạn, mình vẫn ở đây. Bạn cứ hỏi tiếp nhé!' },
+    { text: 'Ôi mình vội quá! Bạn muốn hỏi gì cứ nhắn mình nhé.' },
+  ],
   utter_you_are_welcome: [
     { text: 'Không có gì ạ, rất vui được hỗ trợ bạn!' },
     { text: 'Rất sẵn lòng! Bạn cần gì thêm cứ nhắn mình nhé.' },
@@ -374,6 +395,7 @@ const RESPONSES: Record<string, unknown[]> = {
 const RULES: [string, string, string][] = [
   ['Chào hỏi', 'greet', 'utter_greet'],
   ['Tạm biệt', 'goodbye', 'utter_goodbye'],
+  ['Người dùng muốn hỏi tiếp', 'not_finished', 'utter_continue'],
   ['Cảm ơn', 'thank', 'utter_you_are_welcome'],
   ['Hỏi bot là ai', 'bot_challenge', 'utter_iamabot'],
   ['Hỏi tên bot', 'ask_bot_name', 'utter_bot_name'],
