@@ -519,11 +519,12 @@ const STORIES: { story: string; steps: unknown[] }[] = [
 ];
 
 export const TRAINING_SEED: TrainingDocuments = {
-  intents: Object.entries(NLU).map(([title, { description, examples }]) => ({
+  intents: Object.entries(NLU).map(([title, { description }]) => ({
     title,
     description,
-    examples,
   })),
+  // The examples live only here, where Rasa trains from and the intents page
+  // reads and writes them.
   nlu: Object.entries(NLU).map(([intent, { examples }]) => ({
     intent,
     examples,
