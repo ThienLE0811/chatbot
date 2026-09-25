@@ -1,33 +1,16 @@
-import { IsEmail, IsNotEmpty, IsString, IsDate } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UserDto {
-  @IsString({})
-  userName: string;
-
+  @IsOptional()
   @IsString()
-  password: string;
+  @MaxLength(100)
+  firstName?: string;
 
+  @IsOptional()
   @IsString()
-  firstName: string;
+  @MaxLength(100)
+  lastName?: string;
 
-  @IsString()
-  lastName: string;
-
-  @IsEmail()
+  @IsEmail({}, { message: 'Email không hợp lệ' })
   email: string;
-
-  @IsString()
-  userRole: {};
-
-  @IsString()
-  userRoleName: string;
-
-  @IsString()
-  userGroup: string;
-
-  @IsDate()
-  createdAt: Date;
-
-  @IsDate()
-  updateAt: Date;
 }

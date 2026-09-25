@@ -1,23 +1,18 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './user/users.module';
 import { AppController } from './app.controller';
 import { BotModule } from './bot/bot.module';
 import { BotController } from './bot/bot.controller';
-import { RolesModule } from './auth/role_services/role_permission.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from './auth/jwt_authGuard/jwt-auth.guard';
+import { AuthModule } from './auth/auth.module';
+import { RolesModule } from './roles/roles.module';
 import { MongoService } from './app.service';
-import { HistoryController } from './auth/historyTrain/history.controller';
-import { HistoryModule } from './auth/historyTrain/history.module';
-import { HistoryService } from './auth/historyTrain/history.service';
-import { HistorySchema } from './auth/historyTrain/schema/historys.schema';
+import { HistoryModule } from './training/history/history.module';
 import { TrainingModule } from './training/training.module';
 import { ChatTestModule } from './chat-test/chat-test.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { ConversationsModule } from './conversations/conversations.module';
-// import { MyMiddleware } from './auth/middleware/my.middleware';
 
 @Module({
   imports: [
@@ -28,9 +23,12 @@ import { ConversationsModule } from './conversations/conversations.module';
         uri: config.getOrThrow<string>('MONGODB_URI'),
       }),
     }),
+    // Registers the global AccessGuard: every route needs a login unless
+    // marked @Public(), plus the permissions it declares.
+    AuthModule,
     UsersModule,
-    BotModule,
     RolesModule,
+    BotModule,
     HistoryModule,
     TrainingModule,
     ChatTestModule,
@@ -39,19 +37,5 @@ import { ConversationsModule } from './conversations/conversations.module';
   ],
   controllers: [AppController, BotController],
   providers: [MongoService],
-  // providers: [
-  //   {
-  //     provide: APP_GUARD,
-  //     useClass: JwtAuthGuard,
-  //   },
-  // ],
 })
 export class AppModule {}
-
-// export class AppModule implements NestModule {
-//   configure(consumer: MiddlewareConsumer) {
-//     consumer
-//       .apply(MyMiddleware)
-//       .forRoutes('*');
-//   }
-// }

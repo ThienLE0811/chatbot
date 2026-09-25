@@ -6,10 +6,12 @@ import {
   Post,
   ValidationPipe,
 } from '@nestjs/common';
+import { RequirePermissions } from '../auth/access.decorators';
 import { ChatTestService } from './chat-test.service';
 import { SendMessageDto } from './dto/send-message.dto';
 
 @Controller('chat-test')
+@RequirePermissions('chat_test.use')
 export class ChatTestController {
   constructor(private readonly chat: ChatTestService) {}
 

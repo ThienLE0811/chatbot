@@ -23,6 +23,7 @@ import {
   share,
   takeUntil,
 } from 'rxjs';
+import { RequirePermissions } from '../auth/access.decorators';
 import { TrainingDataExporter } from './data/training-data.exporter';
 import { TrainingDataValidator } from './data/training-data.validator';
 import { ModelsService } from './models.service';
@@ -34,6 +35,7 @@ const PING_MS = 20_000;
 const MAX_PAGE_SIZE = 100;
 
 @Controller('train')
+@RequirePermissions('train.read')
 export class TrainingController {
   constructor(
     private readonly jobs: TrainJobsService,
@@ -48,6 +50,7 @@ export class TrainingController {
    * progress. Unchanged data reuses the running model unless `force=true`.
    */
   @Post()
+  @RequirePermissions('train.run')
   @HttpCode(HttpStatus.ACCEPTED)
   start(
     @Query('force', new DefaultValuePipe(false), ParseBoolPipe) force: boolean,
@@ -57,6 +60,7 @@ export class TrainingController {
 
   /** Dry run of the checks the worker performs, without training. */
   @Post('validate')
+  @RequirePermissions('train.run')
   @HttpCode(HttpStatus.OK)
   async validate() {
     const dataset = await this.exporter.load();
@@ -83,6 +87,8 @@ export class TrainingController {
   }
 
   /**
+   * EventSource cannot send headers: SSE routes take `?access_token=`.
+   *
    * SSE: a `snapshot` of the job, then `log` / `validation` events, ending
    * with `done`. Every event is a plain `message` whose data has a `type`.
    */
@@ -109,6 +115,7 @@ export class TrainingController {
 
   /** Rollback: loads a previously trained model into Rasa. */
   @Post('models/:modelFile/activate')
+  @RequirePermissions('train.run')
   @HttpCode(HttpStatus.OK)
   activate(@Param('modelFile') modelFile: string) {
     return this.models.activate(modelFile);

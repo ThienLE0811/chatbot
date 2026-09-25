@@ -1,19 +1,31 @@
-import { Body, Controller, Get, Param, Post, Put,HttpCode, HttpStatus, Delete, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  ValidationPipe,
+} from '@nestjs/common';
+import {
+  CurrentUser,
+  Principal,
+  RequirePermissions,
+} from '../auth/access.decorators';
 import { CreateUser } from './dto/create-user.dto';
 import { UpdateUser } from './dto/update-user.dto';
-import { LoginDto } from './dto/login.dto';
 import { UsersService } from './users.service';
-import { JwtService } from '@nestjs/jwt';
 
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
+/** Đăng nhập, đăng ký, thông tin của chính mình: xem AuthController. */
 @Controller('users')
+@RequirePermissions('users.read')
 export class UsersController {
-  constructor(
-    private readonly service: UsersService ,
-    private readonly jwtService: JwtService) {}
-  
+  constructor(private readonly service: UsersService) {}
 
-   @Get('/getList')
+  @Get('/getList')
   async index() {
     return await this.service.findAll();
   }
@@ -23,53 +35,28 @@ export class UsersController {
     return await this.service.findOne(id);
   }
 
-  @Post('/register')
-  async create(@Body() createUser: CreateUser) {
-    console.log(123)
-    return await this.service.create(createUser);
+  @Post('/create')
+  @RequirePermissions('users.write')
+  async create(
+    @Body(validation) createUser: CreateUser,
+    @CurrentUser() actor: Principal,
+  ) {
+    return await this.service.createByAdmin(createUser, actor);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateUser: UpdateUser) {
-    return await this.service.update(id, updateUser);
+  @RequirePermissions('users.write')
+  async update(
+    @Param('id') id: string,
+    @Body(validation) updateUser: UpdateUser,
+    @CurrentUser() actor: Principal,
+  ) {
+    return await this.service.update(id, updateUser, actor);
   }
 
   @Delete('/delete/:id')
-  async delete(@Param('id') id: string) {
-    return await this.service.delete(id);
+  @RequirePermissions('users.write')
+  async delete(@Param('id') id: string, @CurrentUser() actor: Principal) {
+    return await this.service.delete(id, actor);
   }
-
-  @Post('/login')
-  async login(@Body() loginDto: LoginDto) {
-    console.log("login")
-    
-    return await this.service.login(loginDto);
-  }
-
-  @Post('/logout')
-  async logout(@Req() req: any) {
-    // Xóa token trong memory
-
-    return await this.service.logout(req);
-  }
-
-  //  @Post('refresh-token')
-  // async refreshToken(@Req() req: Request, @Res() res: Response) {
-  //   const result = await this.authService.refreshToken(req.cookies.refresh_token);
-  //   // Set new access token in cookie
-  //   res.cookie('access_token', result.token, { httpOnly: true, maxAge: 3600000 }); // 1 hour
-  //   return result.data;
-  // }
-
 }
-
-
-
-
-
-
-
-
-
-
-

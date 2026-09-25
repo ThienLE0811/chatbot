@@ -13,6 +13,7 @@ import {
   Query,
   ValidationPipe,
 } from '@nestjs/common';
+import { RequirePermissions } from '../auth/access.decorators';
 import { ConversationsService } from './conversations.service';
 import { AddToIntentDto, SetReviewDto } from './dto/conversation.dto';
 import { DEFAULT_LOW_CONFIDENCE } from './review-filter';
@@ -25,6 +26,7 @@ const confidence = (value: number) => Math.min(Math.max(value, 0), 1);
 
 /** Real conversations with the bot (Telegram) and the messages to review. */
 @Controller('conversations')
+@RequirePermissions('conversations.read')
 export class ConversationsController {
   constructor(private readonly conversations: ConversationsService) {}
 
@@ -71,12 +73,14 @@ export class ConversationsController {
   }
 
   @Patch('messages/:id/review')
+  @RequirePermissions('conversations.review')
   setReview(@Param('id') id: string, @Body(validation) body: SetReviewDto) {
     return this.conversations.setReview(id, body.status);
   }
 
   /** Adds the message to an intent's examples; training again applies it. */
   @Post('messages/:id/add-to-intent')
+  @RequirePermissions('conversations.review')
   @HttpCode(HttpStatus.OK)
   addToIntent(@Param('id') id: string, @Body(validation) body: AddToIntentDto) {
     return this.conversations.addToIntent(id, body.intent);

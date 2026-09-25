@@ -1,219 +1,214 @@
 import {
-  Injectable,
-  HttpException,
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   HttpStatus,
-  Res,
+  Injectable,
   NotFoundException,
-  ValidationError,
 } from '@nestjs/common';
-import { Request, Response } from 'express';
-
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, NumberSchemaDefinition } from 'mongoose';
-import { CreateUser } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+import { isValidObjectId, Model } from 'mongoose';
+import { Principal } from '../auth/access.decorators';
+import { covers } from '../auth/permissions';
+import { RolesService } from '../roles/roles.service';
+import { ADMIN_ROLE, effectivePermissions } from '../roles/system-roles';
+import { CreateUser, RegisterUser } from './dto/create-user.dto';
+import { UpdateMe } from './dto/update-me.dto';
 import { UpdateUser } from './dto/update-user.dto';
 import { User, UserDocument } from './schema/users.schema';
-import { LoginDto } from './dto/login.dto';
-import { compare } from 'bcryptjs';
-import jwt_decode from 'jwt-decode';
-import { sign } from 'jsonwebtoken';
-import * as bcrypt from 'bcrypt';
-import { Role, RoleDocument } from 'src/auth/role_services/schema/role.schema';
-import { async } from 'rxjs';
-require('dotenv').config();
+
+const SALT_ROUNDS = 10;
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly model: Model<UserDocument>,
-    @InjectModel(Role.name) private modelRole: Model<RoleDocument>,
+    private readonly roles: RolesService,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return await this.model.find().exec();
+  async findAll() {
+    const [users, names] = await Promise.all([
+      this.model.find().sort({ createdAt: -1 }).lean(),
+      this.roleNames(),
+    ]);
+    return users.map((user) => withRoleName(user, names));
   }
 
-  async findOne(id: string): Promise<User> {
-    let userRoleName = await this.model
-      .findById(id)
-      .exec()
-      .then((data) => {
-        return data.userRoleName;
-      });
-    const role = await this.modelRole.findOne({ roleType: userRoleName });
-    const userRole = role.roleAction;
-    const userGroup = role.description;
-
-    console.log('userGroup:: ', userGroup);
-
-    await this.model
-      .findOneAndUpdate(
-        { _id: id },
-        { userRole: userRole },
-        { userGroup: userGroup },
-      )
-      .exec();
-    return await this.model.findById(id).exec();
+  async findOne(id: string) {
+    const [user, names] = await Promise.all([
+      this.require(id),
+      this.roleNames(),
+    ]);
+    return withRoleName(user, names);
   }
 
-  async login(loginDto: LoginDto) {
-    const { userName, password } = loginDto;
-    let errCode = HttpStatus.UNAUTHORIZED;
-
-    const user = await this.model.findOne({ userName }).lean();
-    console.log(user);
-    if (!user?.userName) {
-      throw new HttpException('Tài khoản không tồn tại!', errCode);
-    }
-
-    const isMatch = await compare(password, user.password);
-
-    if (!isMatch) {
-      throw new HttpException('Mật khẩu không chính xác!', errCode);
-    }
-
-    const accessToken = await this.createToken(user);
-    // const refreshToken = await this.generateRefreshToken(user)
-
-    delete user.password;
-    return {
-      data: {
-        userInfo: user,
-        token: {
-          access_token: accessToken,
-        },
-        statusCode: HttpStatus.OK,
-      },
-    };
+  /** Without the password; null when the account no longer exists. */
+  async findById(id: string) {
+    return isValidObjectId(id) ? this.model.findById(id).lean() : null;
   }
 
-  async createToken(user: LoginDto) {
-    const payload = { username: user.userName };
-    const token = sign(payload, process.env.SECRET_KEY, {
-      expiresIn: '1h',
-      audience: user.userName,
-    });
-    const decodeData: any = jwt_decode(token);
-
-    return { token, decodeData };
+  async findForLogin(userName: string) {
+    return this.model.findOne({ userName }).select('+password').lean();
   }
 
-  // async generateRefreshToken(user: User) {
-  //   const refreshToken = uuid();
-  //   user.refreshToken = refreshToken;
-  //   await this.model.updateOne({ _id: user._id }, { refreshToken });
-  //   return refreshToken;
-  // }
-  // Mật khẩu : 12345
+  /** Sign-up and admin creation both end here, with the role already chosen. */
   async create(
-    createUser: CreateUser,
+    dto: RegisterUser,
+    roleCode: string,
   ): Promise<{ message: string; statusCode: number; User: User }> {
-    let errCode = HttpStatus.UNAUTHORIZED;
-    let saltRounds = 10;
-    let hashedPassword = await bcrypt.hash(createUser?.password, saltRounds);
-    const userNameCheck = await this.model.findOne({
-      userName: createUser?.userName,
+    if (!(await this.roles.findByCode(roleCode))) {
+      throw new BadRequestException(`Nhóm quyền ${roleCode} không tồn tại`);
+    }
+    if (await this.model.exists({ userName: dto.userName })) {
+      throw new ConflictException('Tên người dùng đã tồn tại!');
+    }
+    const user = await this.model.create({
+      ...dto,
+      roleCode,
+      password: await bcrypt.hash(dto.password, SALT_ROUNDS),
     });
-    async function checkUsernameExists(userName: string) {
-      const user = userNameCheck;
-      return !!user;
-    }
-
-    const userExists = await checkUsernameExists(createUser?.userName);
-
-    if (userExists) {
-      throw new HttpException('Tên người dùng đã tồn tại!', errCode);
-    }
-    let userRoleName = createUser?.userRoleName || 'USER';
-    console.log('role:: ', userRoleName);
-    const role = await this.modelRole.findOne({ roleType: userRoleName });
-    const userRole = role.roleAction;
-    const userGroup = role.description;
-
-    console.log(12);
-    const newUser = await new this.model({
-      ...createUser,
-      userRole: userRole,
-      userRoleName: 'USER',
-      userGroup: userGroup,
-      password: hashedPassword,
-      createdAt: new Date(),
-      updateAt: new Date(),
-    }).save();
     return {
-      statusCode: 200,
+      statusCode: HttpStatus.OK,
       message: 'Tạo mới thành công',
-      User: newUser,
+      User: user,
     };
   }
 
-  async logout(req: any) {
-    console.log('req::: ', req);
-    console.log('logout');
-
-    return {
-      message: 'Đăng xuất thành công',
-    };
+  async createByAdmin(dto: CreateUser, actor: Principal) {
+    await this.assertAssignable(actor, dto.roleCode);
+    return this.create(dto, dto.roleCode);
   }
 
   async update(
     id: string,
-    updateUser: UpdateUser,
+    dto: UpdateUser,
+    actor: Principal,
   ): Promise<{ message: string; statusCode: number; User: User }> {
-    // return await this.model.findByIdAndUpdate(id, updateUser).exec();
+    const user = await this.require(id);
+    await this.assertManageable(actor, user);
 
-    // let userRoleName = await this.model.findById(id).exec().then(data=> {
-    //   return data.userRoleName});
-    // console.log("Name role: ",userRoleName)
+    const { password, roleCode, ...profile } = dto;
+    const changes: Partial<User> = { ...profile };
+    // Admin đặt lại mật khẩu: có gửi thì hash rồi lưu, bỏ trống thì giữ mật khẩu cũ.
+    if (password) changes.password = await bcrypt.hash(password, SALT_ROUNDS);
+    if (roleCode && roleCode !== user.roleCode) {
+      await this.assertAssignable(actor, roleCode);
+      await this.assertNotLastAdmin(user);
+      changes.roleCode = roleCode;
+    }
 
-    const userRoleName = updateUser.userRoleName;
-    console.log('Name role: ', userRoleName);
-
-    const role = await this.modelRole.findOne({ roleType: userRoleName });
-
-    const userRole = role.roleAction;
-    const userGroup = role.description;
-    console.log('userGroup:: ', userGroup);
-    const update = await this.model
-      .findByIdAndUpdate(
-        id,
-        {
-          ...updateUser,
-          userRole: userRole,
-          userGroup: userGroup,
-          updateAt: Date.now(),
-        },
-        { new: true },
-      )
-      .exec();
-
+    const updated = await this.model
+      .findByIdAndUpdate(id, changes, { new: true })
+      .lean();
     return {
       message: 'Cập nhật thành công',
-      statusCode: 200,
-      User: update,
+      statusCode: HttpStatus.OK,
+      User: updated,
     };
   }
 
-  // async delete(id: string): Promise<User> {
+  /**
+   * Người dùng tự sửa tài khoản của mình, không cần quyền users.*. Chỉ nhận họ
+   * tên, email, mật khẩu; nhóm quyền không bao giờ đổi ở đây.
+   */
+  async updateOwn(id: string, dto: UpdateMe) {
+    const user = await this.model.findById(id).select('+password').lean();
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
 
-  //   return await this.model.findByIdAndDelete(id).exec()
-  // }
+    const { firstName, lastName, email, newPassword, currentPassword } = dto;
+    const changes: Partial<User> = { firstName, lastName, email };
+    if (newPassword) {
+      const matches = await bcrypt.compare(
+        currentPassword ?? '',
+        user.password,
+      );
+      if (!matches) {
+        throw new BadRequestException('Mật khẩu hiện tại không đúng');
+      }
+      changes.password = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    }
+    // Bỏ các trường không gửi lên, để không ghi đè thành rỗng.
+    Object.keys(changes).forEach(
+      (key) => changes[key] === undefined && delete changes[key],
+    );
+
+    return this.model.findByIdAndUpdate(id, changes, { new: true }).lean();
+  }
 
   async delete(
     id: string,
+    actor: Principal,
   ): Promise<{ message: string; statusCode: number; user: User }> {
-    const deletedUser = await this.model.findByIdAndDelete(id).exec();
-    if (!deletedUser) {
-      throw new NotFoundException(`Người dùng với id: ${id} not found`);
+    if (id === actor.id) {
+      throw new BadRequestException('Không thể tự xóa tài khoản của mình');
     }
+    const user = await this.require(id);
+    await this.assertManageable(actor, user);
+    await this.assertNotLastAdmin(user);
+    await this.model.deleteOne({ _id: user._id });
     return {
-      message: `Xóa thành công người dùng với id là ${id}`,
-      statusCode: 200,
-      user: deletedUser,
+      message: `Xóa thành công người dùng ${user.userName}`,
+      statusCode: HttpStatus.OK,
+      user,
     };
   }
 
-  async getUsersWithRoles(): Promise<User[]> {
-    return this.model.find().populate('roles').exec();
+  private async require(id: string) {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+    return user;
   }
+
+  private async roleNames(): Promise<Map<string, string>> {
+    const roles = await this.roles.list();
+    return new Map(roles.map((role) => [role.code, role.name]));
+  }
+
+  /**
+   * Editing someone includes resetting their password, i.e. being able to log
+   * in as them, so their role must not grant more than the actor holds.
+   */
+  private async assertManageable(
+    actor: Principal,
+    user: { _id: unknown; roleCode: string },
+  ) {
+    if (String(user._id) === actor.id) return;
+    const theirs = await this.roles.permissionsOf(user.roleCode);
+    if (!covers(actor.permissions, theirs)) {
+      throw new ForbiddenException(
+        'Không thể thao tác với người dùng có nhiều quyền hơn bạn',
+      );
+    }
+  }
+
+  /** Otherwise anyone with users.write could make themselves an admin. */
+  private async assertAssignable(actor: Principal, roleCode: string) {
+    const role = await this.roles.findByCode(roleCode);
+    if (!role) {
+      throw new BadRequestException(`Nhóm quyền ${roleCode} không tồn tại`);
+    }
+    if (!covers(actor.permissions, effectivePermissions(role))) {
+      throw new ForbiddenException(
+        'Không thể gán nhóm quyền có nhiều quyền hơn bạn',
+      );
+    }
+  }
+
+  private async assertNotLastAdmin(user: { roleCode: string }) {
+    if (user.roleCode !== ADMIN_ROLE) return;
+    const admins = await this.model.countDocuments({ roleCode: ADMIN_ROLE });
+    if (admins <= 1) {
+      throw new BadRequestException(
+        'Đây là quản trị viên cuối cùng, không thể xóa hoặc chuyển sang nhóm khác',
+      );
+    }
+  }
+}
+
+function withRoleName<T extends { roleCode: string }>(
+  user: T,
+  names: Map<string, string>,
+) {
+  return { ...user, roleName: names.get(user.roleCode) ?? user.roleCode };
 }

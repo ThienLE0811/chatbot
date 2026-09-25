@@ -28,6 +28,26 @@ import { ActionsService } from './actions/action.service';
 import { RulesService } from './rules/rules.service';
 import { RulesController } from './rules/rules.controller';
 import { Rules, RulesSchema } from './rules/schema/rules.schema';
+import { ReadWriteAccess } from '../auth/access.decorators';
+
+const DIALOGUE_CONTROLLERS = [
+  ResponsesController,
+  SlotController,
+  FormsController,
+  IntentsController,
+  EntitiesController,
+  NluController,
+  StoriesController,
+  ActionsController,
+  RulesController,
+];
+
+// Toàn bộ dữ liệu thiết kế hội thoại: xem cần dialogue.read, thêm/sửa/xóa
+// cần dialogue.write. Một route nào cần quyền khác thì tự khai báo trên
+// handler của nó, khai báo đó được ưu tiên hơn.
+DIALOGUE_CONTROLLERS.forEach((controller) =>
+  ReadWriteAccess('dialogue')(controller),
+);
 
 @Module({
   imports: [
@@ -43,18 +63,7 @@ import { Rules, RulesSchema } from './rules/schema/rules.schema';
       { name: Rules.name, schema: RulesSchema },
     ]),
   ],
-  controllers: [
-    BotController,
-    ResponsesController,
-    SlotController,
-    FormsController,
-    IntentsController,
-    EntitiesController,
-    NluController,
-    StoriesController,
-    ActionsController,
-    RulesController,
-  ],
+  controllers: [BotController, ...DIALOGUE_CONTROLLERS],
   providers: [
     ResponsesService,
     SlotsService,

@@ -1,14 +1,11 @@
-
-import { IsNumber, IsString} from 'class-validator';
-
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginDto {
-    @IsString()
-    userName: string;
+  @IsString()
+  @IsNotEmpty({ message: 'Vui lòng nhập tên đăng nhập' })
+  userName: string;
 
-    @IsString()
-    password: string;
-
-    
-
+  @IsString()
+  @IsNotEmpty({ message: 'Vui lòng nhập mật khẩu' })
+  password: string;
 }

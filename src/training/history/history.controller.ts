@@ -1,15 +1,9 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Put,
-} from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { RequirePermissions } from '../../auth/access.decorators';
 import { HistoryService } from './history.service';
 
 @Controller('history')
+@RequirePermissions('train.read')
 export class HistoryController {
   constructor(private readonly service: HistoryService) {}
 
