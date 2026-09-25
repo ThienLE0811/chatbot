@@ -1,4 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { NluService } from '../nlu/nlu.service';
 import { IntentsService } from './intents.service';
 
 const ID = '6ab497ab8b8210e0cf5762ce';
@@ -44,7 +45,10 @@ describe('IntentsService', () => {
       updateOne: jest.fn(() => query({})),
       deleteOne: jest.fn(() => query({})),
     };
-    service = new IntentsService(intents as any, nlu as any);
+    service = new IntentsService(
+      intents as any,
+      new NluService(nlu as any, intents as any),
+    );
   });
 
   describe('findAll', () => {

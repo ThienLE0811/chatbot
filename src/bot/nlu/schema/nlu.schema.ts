@@ -3,14 +3,15 @@ import { HydratedDocument } from 'mongoose';
 
 export type NluDocument = HydratedDocument<Nlu>;
 
-
+/** The examples Rasa trains on for one intent. */
 @Schema({ collection: 'nlu' })
 export class Nlu {
+  /** Code of the intent, one document per intent. */
   @Prop({ required: true, unique: true })
   intent: string;
 
-  @Prop({ type: [] })
-  examples: [];
+  @Prop({ type: [String] })
+  examples: string[];
 
   @Prop()
   createdAt: Date;
