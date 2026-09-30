@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateEntities } from './dto/create-entities.dto';
 import { UpdateEntities } from './dto/update-entities.dto';
-import { Entities, EntitiesDocument } from './schema/Entities.schema';
+import { Entities, EntitiesDocument } from './schema/entities.schema';
 
 @Injectable()
 export class EntitiesService {
