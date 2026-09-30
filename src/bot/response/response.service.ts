@@ -33,21 +33,11 @@ export class ResponsesService {
   //   }).save();
   // }
 
-  async create(createResponses: CreateResponses): Promise<{
-    message: string;
-    statusCode: number;
-    createResponses: Responses;
-  }> {
-    const create = await new this.model({
+  async create(createResponses: CreateResponses): Promise<Responses> {
+    return await new this.model({
       ...createResponses,
       createdAt: new Date(),
     }).save();
-
-    return {
-      message: 'Tạo mới slots thành công',
-      statusCode: 200,
-      createResponses: create,
-    };
   }
 
   // async update(id: string, updateResponses: UpdateResponses): Promise<Responses> {
@@ -57,33 +47,17 @@ export class ResponsesService {
   async update(
     id: string,
     updateResponses: UpdateResponses,
-  ): Promise<{
-    message: string;
-    statusCode: number;
-    updateResponses: Responses;
-  }> {
-    const update = await this.model
-      .findByIdAndUpdate(id, updateResponses)
+  ): Promise<Responses> {
+    return await this.model
+      .findByIdAndUpdate(id, updateResponses, { new: true })
       .exec();
-    return {
-      message: 'Cập nhật slots thành công',
-      statusCode: 200,
-      updateResponses: update,
-    };
   }
 
   // async delete(id: string): Promise<Responses> {
   //   return await this.model.findByIdAndDelete(id).exec();
   // }
 
-  async delete(
-    id: string,
-  ): Promise<{ message: string; statusCode: number; Responses: Responses }> {
-    const deleteResponses = await this.model.findByIdAndDelete(id).exec();
-    return {
-      message: 'Xóa thành công',
-      statusCode: 200,
-      Responses: deleteResponses,
-    };
+  async delete(id: string): Promise<Responses> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 }

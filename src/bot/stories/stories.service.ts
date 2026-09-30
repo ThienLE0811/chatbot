@@ -26,47 +26,24 @@ export class StoriesService {
     return await this.model.findById(id).exec();
   }
 
-  async create(
-    createStoriess: CreateStories,
-  ): Promise<{ message: string; statusCode: number; Storiess: Stories }> {
-    const createStories = await new this.model({
-      ...createStoriess,
+  async create(dto: CreateStories): Promise<Stories> {
+    return await new this.model({
+      ...dto,
       createdAt: new Date(),
     }).save();
-
-    return {
-      message: 'Tạo mới thành công',
-      statusCode: 200,
-      Storiess: createStories,
-    };
   }
 
-  async update(
-    id: string,
-    updateStories: UpdateStories,
-  ): Promise<{ message: string; statusCode: number; Stories: Stories }> {
-    const updateStoriess = await this.model
+  async update(id: string, updateStories: UpdateStories): Promise<Stories> {
+    return await this.model
       .findByIdAndUpdate(
         id,
         { ...updateStories, updatedAt: Date.now() },
         { new: true },
       )
       .exec();
-    return {
-      message: 'Cập thật thành công',
-      statusCode: 200,
-      Stories: updateStoriess,
-    };
   }
 
-  async delete(
-    id: string,
-  ): Promise<{ message: string; statusCode: number; Stories: Stories }> {
-    const deleteStories = await this.model.findByIdAndDelete(id).exec();
-    return {
-      message: 'Xóa thành công',
-      statusCode: 200,
-      Stories: deleteStories,
-    };
+  async delete(id: string): Promise<Stories> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 }

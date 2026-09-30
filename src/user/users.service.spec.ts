@@ -148,7 +148,7 @@ describe('UsersService', () => {
       const changes = model.findByIdAndUpdate.mock.calls[0][1];
       expect(changes.roleCode).toBe('VIEWER');
       expect(changes.password).toMatch(/^\$2[aby]\$/);
-      expect(result.statusCode).toBe(200);
+      expect(result.roleCode).toBe('VIEWER');
     });
   });
 

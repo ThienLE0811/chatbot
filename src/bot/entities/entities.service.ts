@@ -25,47 +25,24 @@ export class EntitiesService {
     return await this.model.findById(id).exec();
   }
 
-  async create(
-    createEntities: CreateEntities,
-  ): Promise<{ message: string; statusCode: number; Entities: Entities }> {
-    const createIntent = await new this.model({
+  async create(createEntities: CreateEntities): Promise<Entities> {
+    return await new this.model({
       ...createEntities,
       createdAt: new Date(),
     }).save();
-
-    return {
-      message: 'Tạo mới thành công',
-      statusCode: 200,
-      Entities: createIntent,
-    };
   }
 
-  async update(
-    id: string,
-    updateEntities: UpdateEntities,
-  ): Promise<{ message: string; statusCode: number; Entities: Entities }> {
-    const updateIntent = await this.model
+  async update(id: string, updateEntities: UpdateEntities): Promise<Entities> {
+    return await this.model
       .findByIdAndUpdate(
         id,
         { ...updateEntities, updateAt: Date.now() },
         { new: true },
       )
       .exec();
-    return {
-      message: 'Cập thật thành công',
-      statusCode: 200,
-      Entities: updateIntent,
-    };
   }
 
-  async delete(
-    id: string,
-  ): Promise<{ message: string; statusCode: number; Entities: Entities }> {
-    const deleteIntent = await this.model.findByIdAndDelete(id).exec();
-    return {
-      message: 'Xóa thành công',
-      statusCode: 200,
-      Entities: deleteIntent,
-    };
+  async delete(id: string): Promise<Entities> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 }

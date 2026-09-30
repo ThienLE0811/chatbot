@@ -28,7 +28,9 @@ export class FormsService {
   }
 
   async update(id: string, updateForms: UpdateForms): Promise<Forms> {
-    return await this.model.findByIdAndUpdate(id, updateForms).exec();
+    return await this.model
+      .findByIdAndUpdate(id, updateForms, { new: true })
+      .exec();
   }
 
   async delete(id: string): Promise<Forms> {

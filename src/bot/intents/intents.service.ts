@@ -21,12 +21,6 @@ export interface IntentView {
   updateAt?: Date;
 }
 
-export interface IntentResult {
-  message: string;
-  statusCode: number;
-  intents: IntentView;
-}
-
 /**
  * Intents and their examples, edited together on the intents page. The
  * examples are kept by NluService in the `nlu` collection, which is what Rasa
@@ -54,7 +48,7 @@ export class IntentsService {
     return toView(intent, examples.get(intent.title));
   }
 
-  async create(dto: CreateIntents): Promise<IntentResult> {
+  async create(dto: CreateIntents): Promise<IntentView> {
     const { title, description } = dto;
     await this.assertTitleFree(title);
     const examples = dto.examples && cleanExamples(dto.examples);
@@ -67,14 +61,10 @@ export class IntentsService {
     });
     if (examples) await this.nlu.saveExamples(title, examples);
 
-    return {
-      message: 'Tạo mới thành công',
-      statusCode: 200,
-      intents: await this.findOne(String(created._id)),
-    };
+    return this.findOne(String(created._id));
   }
 
-  async update(id: string, dto: UpdateIntents): Promise<IntentResult> {
+  async update(id: string, dto: UpdateIntents): Promise<IntentView> {
     const current = await this.getIntent(id);
     const title = dto.title ?? current.title;
     const renamed = title !== current.title;
@@ -105,24 +95,16 @@ export class IntentsService {
       await this.nlu.saveExamples(title, examples);
     }
 
-    return {
-      message: 'Cập nhật thành công',
-      statusCode: 200,
-      intents: await this.findOne(id),
-    };
+    return this.findOne(id);
   }
 
-  async delete(id: string): Promise<IntentResult> {
+  async delete(id: string): Promise<IntentView> {
     const intent = await this.getIntent(id);
     const examples = await this.nlu.examplesOf([intent.title]);
     await this.model.deleteOne({ _id: id }).exec();
     // Left behind, the examples would still be trained under a missing intent.
     await this.nlu.deleteExamples(intent.title);
-    return {
-      message: 'Xóa thành công',
-      statusCode: 200,
-      intents: toView(intent, examples.get(intent.title)),
-    };
+    return toView(intent, examples.get(intent.title));
   }
 
   private async getIntent(id: string) {

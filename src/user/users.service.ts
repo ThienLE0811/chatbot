@@ -2,7 +2,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  HttpStatus,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -53,26 +52,19 @@ export class UsersService {
   }
 
   /** Sign-up and admin creation both end here, with the role already chosen. */
-  async create(
-    dto: RegisterUser,
-    roleCode: string,
-  ): Promise<{ message: string; statusCode: number; User: User }> {
+  async create(dto: RegisterUser, roleCode: string) {
     if (!(await this.roles.findByCode(roleCode))) {
       throw new BadRequestException(`Nhóm quyền ${roleCode} không tồn tại`);
     }
     if (await this.model.exists({ userName: dto.userName })) {
       throw new ConflictException('Tên người dùng đã tồn tại!');
     }
-    const user = await this.model.create({
+    // The saved document still holds the hash; the schema's toJSON drops it.
+    return this.model.create({
       ...dto,
       roleCode,
       password: await bcrypt.hash(dto.password, SALT_ROUNDS),
     });
-    return {
-      statusCode: HttpStatus.OK,
-      message: 'Tạo mới thành công',
-      User: user,
-    };
   }
 
   async createByAdmin(dto: CreateUser, actor: Principal) {
@@ -80,11 +72,7 @@ export class UsersService {
     return this.create(dto, dto.roleCode);
   }
 
-  async update(
-    id: string,
-    dto: UpdateUser,
-    actor: Principal,
-  ): Promise<{ message: string; statusCode: number; User: User }> {
+  async update(id: string, dto: UpdateUser, actor: Principal) {
     const user = await this.require(id);
     await this.assertManageable(actor, user);
 
@@ -98,14 +86,7 @@ export class UsersService {
       changes.roleCode = roleCode;
     }
 
-    const updated = await this.model
-      .findByIdAndUpdate(id, changes, { new: true })
-      .lean();
-    return {
-      message: 'Cập nhật thành công',
-      statusCode: HttpStatus.OK,
-      User: updated,
-    };
+    return this.model.findByIdAndUpdate(id, changes, { new: true }).lean();
   }
 
   /**
@@ -136,10 +117,7 @@ export class UsersService {
     return this.model.findByIdAndUpdate(id, changes, { new: true }).lean();
   }
 
-  async delete(
-    id: string,
-    actor: Principal,
-  ): Promise<{ message: string; statusCode: number; user: User }> {
+  async delete(id: string, actor: Principal) {
     if (id === actor.id) {
       throw new BadRequestException('Không thể tự xóa tài khoản của mình');
     }
@@ -147,11 +125,7 @@ export class UsersService {
     await this.assertManageable(actor, user);
     await this.assertNotLastAdmin(user);
     await this.model.deleteOne({ _id: user._id });
-    return {
-      message: `Xóa thành công người dùng ${user.userName}`,
-      statusCode: HttpStatus.OK,
-      user,
-    };
+    return user;
   }
 
   private async require(id: string) {

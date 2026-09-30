@@ -1,4 +1,4 @@
-import { HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { RolesService } from '../roles/roles.service';
@@ -23,19 +23,13 @@ export class AuthService {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không đúng');
     }
-    const token = await this.jwt.signAsync({
+    const accessToken = await this.jwt.signAsync({
       sub: String(user._id),
       username: user.userName,
     });
     const userInfo = { ...user };
     delete userInfo.password;
-    return {
-      data: {
-        userInfo,
-        token: { access_token: { token } },
-        statusCode: HttpStatus.OK,
-      },
-    };
+    return { accessToken, userInfo };
   }
 
   /** Public sign-up always lands in SIGNUP_ROLE; an admin can move them later. */

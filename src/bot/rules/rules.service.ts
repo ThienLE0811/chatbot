@@ -19,47 +19,24 @@ export class RulesService {
     return await this.model.findById(id).exec();
   }
 
-  async create(
-    createRuless: CreateRules,
-  ): Promise<{ message: string; statusCode: number; Ruless: Rules }> {
-    const createRules = await new this.model({
-      ...createRuless,
+  async create(dto: CreateRules): Promise<Rules> {
+    return await new this.model({
+      ...dto,
       createdAt: new Date(),
     }).save();
-
-    return {
-      message: 'Tạo mới thành công',
-      statusCode: 200,
-      Ruless: createRules,
-    };
   }
 
-  async update(
-    id: string,
-    updateRules: UpdateRules,
-  ): Promise<{ message: string; statusCode: number; Rules: Rules }> {
-    const updateRuless = await this.model
+  async update(id: string, updateRules: UpdateRules): Promise<Rules> {
+    return await this.model
       .findByIdAndUpdate(
         id,
         { ...updateRules, updatedAt: Date.now() },
         { new: true },
       )
       .exec();
-    return {
-      message: 'Cập thật thành công',
-      statusCode: 200,
-      Rules: updateRuless,
-    };
   }
 
-  async delete(
-    id: string,
-  ): Promise<{ message: string; statusCode: number; Rules: Rules }> {
-    const deleteRules = await this.model.findByIdAndDelete(id).exec();
-    return {
-      message: 'Xóa thành công',
-      statusCode: 200,
-      Rules: deleteRules,
-    };
+  async delete(id: string): Promise<Rules> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 }
