@@ -1,15 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument, Types } from 'mongoose';
-import { Role } from 'src/auth/role_services/schema/role.schema';
+import { HydratedDocument } from 'mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
-@Schema()
+@Schema({ timestamps: { createdAt: 'createdAt', updatedAt: 'updateAt' } })
 export class User {
-  @Prop({required:true, unique:true})
+  @Prop({ required: true, unique: true })
   userName: string;
 
-  @Prop({required:true})
+  // Không bao giờ trả hash ra ngoài: query mặc định bỏ trường này,
+  // chỗ nào cần (login) thì phải select('+password') tường minh.
+  @Prop({ required: true, select: false })
   password: string;
 
   @Prop()
@@ -18,25 +19,22 @@ export class User {
   @Prop()
   lastName: string;
 
-  @Prop({required:true})
-  email:  string;
+  @Prop({ required: true })
+  email: string;
 
-  @Prop({type: mongoose.Schema.Types.String, ref: 'Role'})
-  userRoleName: Role
-
-  @Prop({type: mongoose.Schema.Types.String, ref: 'Role'})
-  userGroup: Role
-
-  @Prop({ type: Object })
-  userRole: { [key: string]: boolean };
-
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updateAt: Date;
-
+  // Mã nhóm quyền (Role.code). Quyền được đọc từ role mỗi request,
+  // nên sửa quyền của nhóm có hiệu lực ngay với mọi người trong nhóm.
+  @Prop({ required: true, index: true })
+  roleCode: string;
 }
 
-
 export const UserSchema = SchemaFactory.createForClass(User);
+
+// select: false không áp dụng cho document vừa save() (API register),
+// nên bỏ password cả khi serialize ra JSON.
+UserSchema.set('toJSON', {
+  transform: (_doc, ret) => {
+    delete ret.password;
+    return ret;
+  },
+});

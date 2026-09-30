@@ -1,3 +1,3 @@
-import {IntentsDto } from "./Intents.dto";
+import { IntentsDto } from './intents.dto';
 
-export class CreateIntents extends IntentsDto {};
+export class CreateIntents extends IntentsDto {}

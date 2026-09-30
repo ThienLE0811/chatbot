@@ -1,0 +1,44 @@
+# Local Rasa + Redis for development: `docker compose up -d`
+# RASA_TOKEN is read from .env; the backend talks to Rasa at http://localhost:5005.
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  rasa:
+    image: rasa/rasa:3.6.21
+    ports:
+      - '5005:5005'
+    # The named volume is created root-owned, and Rasa must write trained
+    # models into it, so the container runs as root in development.
+    user: root
+    environment:
+      RASA_TELEMETRY_ENABLED: 'false'
+      # Rasa caches each trained component (DIET, TED...) and reuses it when its
+      # inputs did not change, e.g. only stories were edited. Kept in a volume so
+      # the cache survives the container being recreated.
+      RASA_CACHE_DIRECTORY: /app/.rasa/cache
+    volumes:
+      - rasa-models:/app/models
+      - rasa-cache:/app/.rasa/cache
+      - ./rasa/credentials.yml:/app/credentials.yml:ro
+    command: >
+      run --enable-api --cors "*"
+      --auth-token ${RASA_TOKEN:?RASA_TOKEN must be set in .env}
+      --credentials credentials.yml
+    restart: unless-stopped
+    mem_limit: 6g
+
+volumes:
+  redis-data:
+  rasa-models:
+  rasa-cache:

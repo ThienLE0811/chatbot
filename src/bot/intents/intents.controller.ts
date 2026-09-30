@@ -7,19 +7,20 @@ import {
   Post,
   Put,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
-import { get } from 'https';
 import { CreateIntents } from './dto/create-response.dto';
 import { UpdateIntents } from './dto/update-response.dto';
 import { IntentsService } from './intents.service';
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
 @Controller('intents')
 export class IntentsController {
   constructor(private readonly service: IntentsService) {}
 
   @Get('/getList')
-  async index(@Query('filters') filters: any) {
-    console.log('filters::', filters);
+  async index(@Query('filters') filters: unknown) {
     return await this.service.findAll(filters);
   }
 
@@ -29,12 +30,15 @@ export class IntentsController {
   }
 
   @Post('/create')
-  async create(@Body() createIntents: CreateIntents) {
+  async create(@Body(validation) createIntents: CreateIntents) {
     return await this.service.create(createIntents);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateIntents: UpdateIntents) {
+  async update(
+    @Param('id') id: string,
+    @Body(validation) updateIntents: UpdateIntents,
+  ) {
     return await this.service.update(id, updateIntents);
   }
 

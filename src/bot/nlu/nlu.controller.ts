@@ -7,17 +7,20 @@ import {
   Post,
   Put,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateNlu } from './dto/create-nlu.dto';
 import { UpdateNlu } from './dto/update-nlu.dto';
 import { NluService } from './nlu.service';
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
 @Controller('Nlu')
 export class NluController {
   constructor(private readonly service: NluService) {}
 
   @Get('/getList')
-  async index(@Query('filters') filters: any) {
+  async index(@Query('filters') filters: unknown) {
     return await this.service.findAll(filters);
   }
 
@@ -27,12 +30,15 @@ export class NluController {
   }
 
   @Post('/create')
-  async create(@Body() createNlu: CreateNlu) {
+  async create(@Body(validation) createNlu: CreateNlu) {
     return await this.service.create(createNlu);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateNlu: UpdateNlu) {
+  async update(
+    @Param('id') id: string,
+    @Body(validation) updateNlu: UpdateNlu,
+  ) {
     return await this.service.update(id, updateNlu);
   }
 
