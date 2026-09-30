@@ -21,6 +21,7 @@ import {
 } from '@nestjs/common';
 import { Public, RequirePermissions } from './auth/access.decorators';
 import { MongoService } from './app.service';
+import { RawResponse } from './common/api-response';
 import { TrainingDataExporter } from './training/data/training-data.exporter';
 import { zip } from 'rxjs/operators';
 interface dataParseMessage {
@@ -47,6 +48,7 @@ export class AppController {
   @Get('/getAllData')
   @RequirePermissions('train.read')
   @Header('Content-Type', 'application/yaml; charset=utf-8')
+  @RawResponse()
   async getAllData(): Promise<string> {
     const dataset = await this.exporter.load();
     return this.exporter.toRasaYaml(dataset);
@@ -61,6 +63,7 @@ export class AppController {
   /** Called by Rasa, which has no login; it only logs what it receives. */
   @Post('/callback_url')
   @Public()
+  @RawResponse()
   async callBackUrl(
     @Body() body: any,
     @Headers() header: Record<string, unknown>,

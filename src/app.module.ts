@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './user/users.module';
 import { AppController } from './app.controller';
@@ -13,6 +14,8 @@ import { TrainingModule } from './training/training.module';
 import { ChatTestModule } from './chat-test/chat-test.module';
 import { TelegramModule } from './telegram/telegram.module';
 import { ConversationsModule } from './conversations/conversations.module';
+import { ApiResponseInterceptor } from './common/api-response.interceptor';
+import { ApiExceptionFilter } from './common/api-exception.filter';
 
 @Module({
   imports: [
@@ -36,6 +39,11 @@ import { ConversationsModule } from './conversations/conversations.module';
     ConversationsModule,
   ],
   controllers: [AppController, BotController],
-  providers: [MongoService],
+  providers: [
+    MongoService,
+    // Every JSON response is `{ status: 'OK' | 'FAILED', data }`.
+    { provide: APP_INTERCEPTOR, useClass: ApiResponseInterceptor },
+    { provide: APP_FILTER, useClass: ApiExceptionFilter },
+  ],
 })
 export class AppModule {}

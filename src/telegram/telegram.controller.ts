@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Public } from '../auth/access.decorators';
+import { RawResponse } from '../common/api-response';
 import { TelegramBotService } from './telegram-bot.service';
 import { TelegramSettings } from './telegram.settings';
 import { TelegramUpdate } from './telegram.types';
@@ -27,6 +28,7 @@ export class TelegramController {
    */
   @Post('webhook')
   @Public()
+  @RawResponse()
   @HttpCode(HttpStatus.OK)
   receive(
     @Headers('x-telegram-bot-api-secret-token') secret: string | undefined,
