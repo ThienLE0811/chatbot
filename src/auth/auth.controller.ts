@@ -6,8 +6,10 @@ import {
   HttpStatus,
   Post,
   Put,
+  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
+import { SkipThrottle, ThrottlerGuard } from '@nestjs/throttler';
 import { RegisterUser } from '../user/dto/create-user.dto';
 import { LoginDto } from '../user/dto/login.dto';
 import { UpdateMe } from '../user/dto/update-me.dto';
@@ -18,6 +20,7 @@ import {
   Public,
 } from './access.decorators';
 import { AuthService } from './auth.service';
+import { LOGIN_THROTTLER, REGISTER_THROTTLER } from './rate-limits';
 
 const validation = new ValidationPipe({ transform: true, whitelist: true });
 
@@ -25,16 +28,27 @@ const validation = new ValidationPipe({ transform: true, whitelist: true });
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
+  /**
+   * Limited per IP (LOGIN_RATE_LIMIT, default 10 a minute), so passwords
+   * cannot be guessed in bulk.
+   */
   @Post('login')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @SkipThrottle({ [REGISTER_THROTTLER]: true })
   @HttpCode(HttpStatus.OK)
   login(@Body(validation) dto: LoginDto) {
     return this.auth.login(dto);
   }
 
-  /** Public sign-up page; the new account gets the VIEWER role. */
+  /**
+   * Public sign-up page; the new account gets the VIEWER role. Limited per IP
+   * (REGISTER_RATE_LIMIT, default 5 an hour).
+   */
   @Post('register')
   @Public()
+  @UseGuards(ThrottlerGuard)
+  @SkipThrottle({ [LOGIN_THROTTLER]: true })
   register(@Body(validation) dto: RegisterUser) {
     return this.auth.register(dto);
   }
