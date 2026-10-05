@@ -77,3 +77,41 @@ describe('ChatTestService.send', () => {
     );
   });
 });
+
+describe('ChatTestService.parse', () => {
+  let rasa: { parse: jest.Mock };
+  let service: ChatTestService;
+
+  beforeEach(() => {
+    rasa = { parse: jest.fn() };
+    service = new ChatTestService(rasa as unknown as RasaClient);
+  });
+
+  it("returns Rasa's reading of the text", async () => {
+    const reading = {
+      text: 'xin chào',
+      intent: { name: 'greet', confidence: 0.97 },
+      entities: [],
+    };
+    rasa.parse.mockResolvedValue(reading);
+
+    await expect(service.parse('xin chào')).resolves.toEqual(reading);
+    expect(rasa.parse).toHaveBeenCalledWith('xin chào');
+  });
+
+  it('explains that no model is loaded when Rasa answers 409', async () => {
+    rasa.parse.mockRejectedValue(
+      new RasaError('Rasa không phân tích được câu (HTTP 409)', {
+        status: 409,
+      }),
+    );
+    await expect(service.parse('hi')).rejects.toThrow(
+      ServiceUnavailableException,
+    );
+  });
+
+  it('reports other Rasa failures as a bad gateway', async () => {
+    rasa.parse.mockRejectedValue(new RasaError('Rasa down'));
+    await expect(service.parse('hi')).rejects.toThrow(BadGatewayException);
+  });
+});

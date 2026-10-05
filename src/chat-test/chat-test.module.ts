@@ -7,5 +7,6 @@ import { ChatTestService } from './chat-test.service';
   imports: [TrainingModule],
   controllers: [ChatTestController],
   providers: [ChatTestService],
+  exports: [ChatTestService],
 })
 export class ChatTestModule {}

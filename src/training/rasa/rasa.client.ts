@@ -33,6 +33,14 @@ export interface RasaTracker {
   latest_action_name?: string | null;
 }
 
+export interface RasaParseResult {
+  text: string;
+  intent: { name: string | null; confidence: number };
+  entities: Record<string, unknown>[];
+  intent_ranking?: { name: string; confidence: number }[];
+  [field: string]: unknown;
+}
+
 export class RasaError extends Error {
   constructor(message: string, readonly details?: unknown) {
     super(message);
@@ -158,6 +166,20 @@ export class RasaClient {
       return Array.isArray(data) ? data : [];
     } catch (error) {
       throw await toRasaError(error, 'Rasa không trả lời tin nhắn');
+    }
+  }
+
+  /** What the NLU model makes of a text, without touching any conversation. */
+  async parse(text: string): Promise<RasaParseResult> {
+    try {
+      const { data } = await this.http.post<RasaParseResult>(
+        '/model/parse',
+        { text },
+        { timeout: STATUS_TIMEOUT_MS },
+      );
+      return data;
+    } catch (error) {
+      throw await toRasaError(error, 'Rasa không phân tích được câu');
     }
   }
 

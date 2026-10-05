@@ -1,38 +1,28 @@
-// import { Controller, Get } from '@nestjs/common';
-
-// @Controller()
-// export class AppController {
-//   @Get("/")
-//   findAll(): string {
-//     return 'ok app';
-//   }
-// }
-
 import {
   Body,
   Controller,
   Get,
   Header,
-  Headers,
-  Param,
+  HttpCode,
+  HttpStatus,
   Post,
-  Req,
-  Res,
+  ValidationPipe,
 } from '@nestjs/common';
-import { Public, RequirePermissions } from './auth/access.decorators';
+import { RequirePermissions } from './auth/access.decorators';
 import { MongoService } from './app.service';
+import { ChatTestService } from './chat-test/chat-test.service';
+import { ParseMessageDto } from './chat-test/dto/parse-message.dto';
 import { RawResponse } from './common/api-response';
 import { TrainingDataExporter } from './training/data/training-data.exporter';
-import { zip } from 'rxjs/operators';
-interface dataParseMessage {
-  text: string;
-  message_id: string;
-}
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
+
 @Controller()
 export class AppController {
   constructor(
     private readonly mongoService: MongoService,
     private readonly exporter: TrainingDataExporter,
+    private readonly chat: ChatTestService,
   ) {}
 
   @Get('/')
@@ -54,26 +44,11 @@ export class AppController {
     return this.exporter.toRasaYaml(dataset);
   }
 
+  /** Rasa's reading of one sentence: intent, confidence, entities. */
   @Post('/parseMessage')
   @RequirePermissions('chat_test.use')
-  async parseMessage(@Body() data: dataParseMessage): Promise<string[]> {
-    return this.mongoService.parseMessage(data);
-  }
-
-  /** Called by Rasa, which has no login; it only logs what it receives. */
-  @Post('/callback_url')
-  @Public()
-  @RawResponse()
-  async callBackUrl(
-    @Body() body: any,
-    @Headers() header: Record<string, unknown>,
-    @Req() request: Record<string, unknown>,
-    @Res() res: Record<string, unknown>,
-    // @Param('Files') File: Record<string, unknown>,
-  ): Promise<string[]> {
-    console.log('body: ', body);
-    console.log('headers ', header);
-
-    return body;
+  @HttpCode(HttpStatus.OK)
+  parseMessage(@Body(validation) dto: ParseMessageDto) {
+    return this.chat.parse(dto.text);
   }
 }
