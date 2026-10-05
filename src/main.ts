@@ -17,6 +17,9 @@ async function bootstrap() {
     );
   }
   app.use(helmet());
+  // Runs the modules' cleanup on SIGTERM (every redeploy): Telegram finishes
+  // the messages in hand, the train worker and Redis connections close.
+  app.enableShutdownHooks();
   // Logins travel as `Authorization: Bearer`, not cookies, so any origin may call.
   app.enableCors();
   await app.listen(process.env.PORT ?? 8000);

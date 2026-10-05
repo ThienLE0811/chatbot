@@ -177,4 +177,51 @@ describe('TrainProcessor', () => {
     expect(jobs.transition).not.toHaveBeenCalled();
     expect(jobs.fail).not.toHaveBeenCalled();
   });
+
+  describe('on shutdown', () => {
+    let worker: { close: jest.Mock };
+
+    beforeEach(() => {
+      worker = { close: jest.fn().mockResolvedValue(undefined) };
+      (processor as any)._worker = worker;
+    });
+
+    it('fails the training in progress and closes without waiting', async () => {
+      rasa.train.mockReturnValue(new Promise(() => undefined));
+      processor.process(job);
+      await new Promise((resolve) => setImmediate(resolve));
+      expect(rasa.train).toHaveBeenCalled();
+
+      await processor.beforeApplicationShutdown();
+
+      expect(jobs.fail).toHaveBeenCalledWith(
+        'job-1',
+        TrainStatus.Training,
+        { message: expect.stringContaining('Server tắt khi đang train') },
+        expect.any(Date),
+      );
+      expect(worker.close).toHaveBeenCalledWith(true);
+    });
+
+    it('only closes the worker when idle', async () => {
+      await processor.process(job);
+
+      await processor.beforeApplicationShutdown();
+
+      expect(jobs.fail).not.toHaveBeenCalled();
+      expect(worker.close).toHaveBeenCalledWith(true);
+    });
+
+    it('still closes the worker when the job cannot be saved', async () => {
+      rasa.train.mockReturnValue(new Promise(() => undefined));
+      jobs.fail.mockRejectedValue(new Error('Mongo down'));
+      jest.spyOn((processor as any).logger, 'warn').mockImplementation();
+      processor.process(job);
+      await new Promise((resolve) => setImmediate(resolve));
+
+      await processor.beforeApplicationShutdown();
+
+      expect(worker.close).toHaveBeenCalledWith(true);
+    });
+  });
 });

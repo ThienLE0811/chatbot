@@ -1,5 +1,5 @@
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
-import { Logger } from '@nestjs/common';
+import { BeforeApplicationShutdown, Logger } from '@nestjs/common';
 import { Job, UnrecoverableError } from 'bullmq';
 import { TrainingDataExporter } from './data/training-data.exporter';
 import { TrainingDataValidator } from './data/training-data.validator';
@@ -25,8 +25,12 @@ class TrainingAborted extends Error {
 // maxStalledCount 0: if the process dies mid-training the job fails instead of
 // silently re-sending the data to a Rasa that may still be training it.
 @Processor(TRAIN_QUEUE, { concurrency: 1, maxStalledCount: 0 })
-export class TrainProcessor extends WorkerHost {
+export class TrainProcessor
+  extends WorkerHost
+  implements BeforeApplicationShutdown
+{
   private readonly logger = new Logger(TrainProcessor.name);
+  private running?: { id: string; stage: TrainStatus; startedAt: Date };
 
   constructor(
     private readonly jobs: TrainJobsService,
@@ -46,9 +50,11 @@ export class TrainProcessor extends WorkerHost {
     }
 
     const startedAt = new Date();
-    let stage = TrainStatus.Validating;
+    // Kept on the instance so a shutdown knows which job it interrupts.
+    const run = { id, stage: TrainStatus.Validating, startedAt };
+    this.running = run;
     try {
-      await this.jobs.transition(id, stage, 'Bắt đầu kiểm tra dữ liệu', {
+      await this.jobs.transition(id, run.stage, 'Bắt đầu kiểm tra dữ liệu', {
         startedAt,
       });
       const dataset = await this.exporter.load();
@@ -59,7 +65,7 @@ export class TrainProcessor extends WorkerHost {
       for (const issue of report.warnings.slice(0, MAX_LOGGED_ISSUES)) {
         await this.jobs.log(
           id,
-          stage,
+          run.stage,
           'warn',
           `${issue.path}: ${issue.message}`,
         );
@@ -68,7 +74,7 @@ export class TrainProcessor extends WorkerHost {
         for (const issue of report.errors.slice(0, MAX_LOGGED_ISSUES)) {
           await this.jobs.log(
             id,
-            stage,
+            run.stage,
             'error',
             `${issue.path}: ${issue.message}`,
           );
@@ -80,7 +86,7 @@ export class TrainProcessor extends WorkerHost {
       }
       await this.jobs.log(
         id,
-        stage,
+        run.stage,
         'info',
         `Dữ liệu hợp lệ: ${exported.stats.intents} ý định, ${exported.stats.examples} câu mẫu, ` +
           `${exported.stats.stories} story, ${exported.stats.rules} rule, ${report.warnings.length} cảnh báo`,
@@ -89,7 +95,7 @@ export class TrainProcessor extends WorkerHost {
       const activeModel = modelFileName((await this.rasa.status()).model_file);
       await this.jobs.log(
         id,
-        stage,
+        run.stage,
         'info',
         `Kết nối Rasa thành công, model đang chạy: ${activeModel ?? 'chưa có'}`,
       );
@@ -108,23 +114,23 @@ export class TrainProcessor extends WorkerHost {
         return { modelFile: activeModel };
       }
 
-      stage = TrainStatus.Training;
+      run.stage = TrainStatus.Training;
       await this.jobs.transition(
         id,
-        stage,
+        run.stage,
         `Gửi dữ liệu sang Rasa để train (${Buffer.byteLength(
           exported.yaml,
         )} bytes)`,
         { dataHash: exported.hash },
       );
-      const { modelFile } = await this.withHeartbeat(id, stage, () =>
+      const { modelFile } = await this.withHeartbeat(id, run.stage, () =>
         this.rasa.train(exported.yaml),
       );
 
-      stage = TrainStatus.Loading;
+      run.stage = TrainStatus.Loading;
       await this.jobs.transition(
         id,
-        stage,
+        run.stage,
         `Rasa đã train xong model ${modelFile}, đang nạp model`,
         { modelFile },
       );
@@ -139,7 +145,7 @@ export class TrainProcessor extends WorkerHost {
           : undefined;
       await this.jobs.fail(
         id,
-        stage,
+        run.stage,
         { message: error?.message ?? String(error), details },
         startedAt,
       );
@@ -148,7 +154,36 @@ export class TrainProcessor extends WorkerHost {
       }
       // A training is expensive and not idempotent, so it is never retried automatically.
       throw new UnrecoverableError(error?.message ?? String(error));
+    } finally {
+      this.running = undefined;
     }
+  }
+
+  /**
+   * Closing the worker normally waits for the running job, and a training can
+   * take an hour: shutting down would hang until it ends or the platform
+   * kills the process. Fail the job with a clear reason and stop at once
+   * instead. Runs before Mongo is disconnected, so the job can be saved.
+   */
+  async beforeApplicationShutdown() {
+    const run = this.running;
+    if (run) {
+      await this.jobs
+        .fail(
+          run.id,
+          run.stage,
+          {
+            message:
+              'Server tắt khi đang train nên job bị dừng, model mới không được nạp. Hãy train lại.',
+          },
+          run.startedAt,
+        )
+        .catch((err) =>
+          this.logger.warn(`Không cập nhật được job ${run.id}: ${err}`),
+        );
+    }
+    // Forced: do not wait for the job; its lock simply expires in Redis.
+    await this.worker.close(true);
   }
 
   /** Covers failures that bypass process(), such as a job stalling past its limit. */

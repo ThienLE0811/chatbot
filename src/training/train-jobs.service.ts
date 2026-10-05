@@ -357,9 +357,14 @@ export class TrainJobsService implements OnApplicationBootstrap {
         if (event.type === 'done') subscriber.complete();
       };
 
-      const live = this.events.forJob(id).subscribe((event) => {
-        if (lastSeq === null) buffer.push(event);
-        else emit(event);
+      const live = this.events.forJob(id).subscribe({
+        next: (event) => {
+          if (lastSeq === null) buffer.push(event);
+          else emit(event);
+        },
+        // The events end when the server shuts down; an open stream would
+        // otherwise keep the HTTP server from closing.
+        complete: () => subscriber.complete(),
       });
 
       this.findOne(id)
