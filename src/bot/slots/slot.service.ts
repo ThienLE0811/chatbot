@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { byName, deleteRecord, findRecord, updateRecord } from '../records';
 import { CreateSlots } from './dto/create-slot.dto';
 import { UpdateSlots } from './dto/update-slot.dto';
 import { Slots, SlotsDocument } from './schema/slot.schema';
+
+const NOT_FOUND = 'Không tìm thấy slot';
 
 @Injectable()
 export class SlotsService {
@@ -11,38 +14,28 @@ export class SlotsService {
     @InjectModel(Slots.name) private readonly model: Model<SlotsDocument>,
   ) {}
 
-  async findAll(value: any): Promise<Slots[]> {
-    if (!value) {
-      return await this.model.find().exec();
-    }
-
-    const slots = await this.model.find({ nameSlot: value }).exec();
-
-    return slots;
+  findAll(name?: unknown): Promise<Slots[]> {
+    return this.model.find(byName('nameSlot', name)).exec();
   }
 
-  async findOne(id: string): Promise<Slots> {
-    return await this.model.findById(id).exec();
+  findOne(id: string): Promise<Slots> {
+    return findRecord(this.model, id, NOT_FOUND);
   }
 
-  async create(createSlots: CreateSlots): Promise<Slots> {
-    return await new this.model({
-      ...createSlots,
-      createdAt: new Date(),
-    }).save();
+  create(dto: CreateSlots): Promise<Slots> {
+    return this.model.create({ ...dto, createdAt: new Date() });
   }
 
-  async update(id: string, updateSlots: UpdateSlots): Promise<Slots> {
-    return await this.model
-      .findByIdAndUpdate(id, updateSlots, { new: true })
-      .exec();
+  update(id: string, dto: UpdateSlots): Promise<Slots> {
+    return updateRecord(
+      this.model,
+      id,
+      { ...dto, updateAt: new Date() },
+      NOT_FOUND,
+    );
   }
 
-  // async delete(id: string): Promise<Slots> {
-  //   return await this.model.findByIdAndDelete(id).exec();
-  // }
-
-  async delete(id: string): Promise<Slots> {
-    return await this.model.findByIdAndDelete(id).exec();
+  delete(id: string): Promise<Slots> {
+    return deleteRecord(this.model, id, NOT_FOUND);
   }
 }

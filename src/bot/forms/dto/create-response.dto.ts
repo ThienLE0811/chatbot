@@ -1,3 +1,3 @@
-import {FormsDto } from "./forms.dto";
+import { FormsDto } from './forms.dto';
 
-export class CreateForms extends FormsDto {};
+export class CreateForms extends FormsDto {}

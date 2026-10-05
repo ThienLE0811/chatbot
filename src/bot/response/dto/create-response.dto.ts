@@ -1,3 +1,3 @@
-import {ResponsesDto } from "./response.dto";
+import { ResponsesDto } from './response.dto';
 
-export class CreateResponses extends ResponsesDto {};
+export class CreateResponses extends ResponsesDto {}

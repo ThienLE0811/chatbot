@@ -1,3 +1,3 @@
-import {SlotsDto } from "./slot.dto";
+import { SlotsDto } from './slot.dto';
 
-export class CreateSlots extends SlotsDto {};
+export class CreateSlots extends SlotsDto {}

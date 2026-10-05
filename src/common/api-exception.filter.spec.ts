@@ -64,6 +64,22 @@ describe('ApiExceptionFilter', () => {
     });
   });
 
+  it('turns a unique index violation into a 409', () => {
+    const duplicate = Object.assign(new Error('E11000 duplicate key'), {
+      code: 11000,
+      keyValue: { story: 'greet' },
+    });
+    filter.catch(duplicate, hostFor(res));
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith({
+      status: 'FAILED',
+      data: {
+        statusCode: 409,
+        message: 'Giá trị "greet" của trường story đã tồn tại',
+      },
+    });
+  });
+
   it('hides unexpected errors behind a 500', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
     filter.catch(new Error('db password is hunter2'), hostFor(res));

@@ -1,3 +1,3 @@
-import {EntitiesDto } from "./entities.dto";
+import { EntitiesDto } from './entities.dto';
 
-export class CreateEntities extends EntitiesDto {};
+export class CreateEntities extends EntitiesDto {}

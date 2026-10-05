@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { byName, deleteRecord, findRecord, updateRecord } from '../records';
 import { CreateStories } from './dto/create-stories.dto';
 import { UpdateStories } from './dto/update-stories.dto';
 import { Stories, StoriesDocument } from './schema/stories.schema';
+
+const NOT_FOUND = 'Không tìm thấy story';
 
 @Injectable()
 export class StoriesService {
@@ -11,39 +14,28 @@ export class StoriesService {
     @InjectModel(Stories.name) private readonly model: Model<StoriesDocument>,
   ) {}
 
-  async findAll(value: any): Promise<Stories[]> {
-    if (!value) {
-      return await this.model.find().exec();
-    }
-
-    const stories = await this.model.find({ story: value }).exec();
-
-    return stories;
-    // return await this.model.find().exec();
+  findAll(name?: unknown): Promise<Stories[]> {
+    return this.model.find(byName('story', name)).exec();
   }
 
-  async findOne(id: string): Promise<Stories> {
-    return await this.model.findById(id).exec();
+  findOne(id: string): Promise<Stories> {
+    return findRecord(this.model, id, NOT_FOUND);
   }
 
-  async create(dto: CreateStories): Promise<Stories> {
-    return await new this.model({
-      ...dto,
-      createdAt: new Date(),
-    }).save();
+  create(dto: CreateStories): Promise<Stories> {
+    return this.model.create({ ...dto, createdAt: new Date() });
   }
 
-  async update(id: string, updateStories: UpdateStories): Promise<Stories> {
-    return await this.model
-      .findByIdAndUpdate(
-        id,
-        { ...updateStories, updatedAt: Date.now() },
-        { new: true },
-      )
-      .exec();
+  update(id: string, dto: UpdateStories): Promise<Stories> {
+    return updateRecord(
+      this.model,
+      id,
+      { ...dto, updatedAt: new Date() },
+      NOT_FOUND,
+    );
   }
 
-  async delete(id: string): Promise<Stories> {
-    return await this.model.findByIdAndDelete(id).exec();
+  delete(id: string): Promise<Stories> {
+    return deleteRecord(this.model, id, NOT_FOUND);
   }
 }

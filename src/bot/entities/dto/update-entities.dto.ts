@@ -1,3 +1,4 @@
-import { EntitiesDto } from "./entities.dto";
+import { PartialType } from '@nestjs/mapped-types';
+import { EntitiesDto } from './entities.dto';
 
-export class UpdateEntities extends EntitiesDto {};
+export class UpdateEntities extends PartialType(EntitiesDto) {}

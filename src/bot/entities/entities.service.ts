@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { byName, deleteRecord, findRecord, updateRecord } from '../records';
 import { CreateEntities } from './dto/create-entities.dto';
 import { UpdateEntities } from './dto/update-entities.dto';
 import { Entities, EntitiesDocument } from './schema/entities.schema';
+
+const NOT_FOUND = 'Không tìm thấy thực thể';
 
 @Injectable()
 export class EntitiesService {
@@ -11,38 +14,28 @@ export class EntitiesService {
     @InjectModel(Entities.name) private readonly model: Model<EntitiesDocument>,
   ) {}
 
-  async findAll(value: any): Promise<Entities[]> {
-    if (!value) {
-      return await this.model.find().exec();
-    }
-
-    const entities = await this.model.find({ nameEntities: value }).exec();
-    return entities;
-    // return await this.model.find().exec();
+  findAll(name?: unknown): Promise<Entities[]> {
+    return this.model.find(byName('nameEntities', name)).exec();
   }
 
-  async findOne(id: string): Promise<Entities> {
-    return await this.model.findById(id).exec();
+  findOne(id: string): Promise<Entities> {
+    return findRecord(this.model, id, NOT_FOUND);
   }
 
-  async create(createEntities: CreateEntities): Promise<Entities> {
-    return await new this.model({
-      ...createEntities,
-      createdAt: new Date(),
-    }).save();
+  create(dto: CreateEntities): Promise<Entities> {
+    return this.model.create({ ...dto, createdAt: new Date() });
   }
 
-  async update(id: string, updateEntities: UpdateEntities): Promise<Entities> {
-    return await this.model
-      .findByIdAndUpdate(
-        id,
-        { ...updateEntities, updateAt: Date.now() },
-        { new: true },
-      )
-      .exec();
+  update(id: string, dto: UpdateEntities): Promise<Entities> {
+    return updateRecord(
+      this.model,
+      id,
+      { ...dto, updateAt: new Date() },
+      NOT_FOUND,
+    );
   }
 
-  async delete(id: string): Promise<Entities> {
-    return await this.model.findByIdAndDelete(id).exec();
+  delete(id: string): Promise<Entities> {
+    return deleteRecord(this.model, id, NOT_FOUND);
   }
 }

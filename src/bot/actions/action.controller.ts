@@ -6,37 +6,40 @@ import {
   Param,
   Post,
   Put,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateActions } from './dto/create-action.dto';
 import { UpdateActions } from './dto/update-action.dto';
 import { ActionsService } from './action.service';
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
 @Controller('actions')
 export class ActionsController {
   constructor(private readonly service: ActionsService) {}
 
   @Get('/getList')
-  async index() {
-    return await this.service.findAll();
+  index() {
+    return this.service.findAll();
   }
 
   @Get(':id')
-  async find(@Param('id') id: string) {
-    return await this.service.findOne(id);
+  find(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Post('/create')
-  async create(@Body() createActions: CreateActions) {
-    return await this.service.create(createActions);
+  create(@Body(validation) dto: CreateActions) {
+    return this.service.create(dto);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateActions: UpdateActions) {
-    return await this.service.update(id, updateActions);
+  update(@Param('id') id: string, @Body(validation) dto: UpdateActions) {
+    return this.service.update(id, dto);
   }
 
   @Delete('/delete/:id')
-  async delete(@Param('id') id: string) {
-    return await this.service.delete(id);
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

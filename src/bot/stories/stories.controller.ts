@@ -7,41 +7,40 @@ import {
   Post,
   Put,
   Query,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CreateStories } from './dto/create-stories.dto';
 import { UpdateStories } from './dto/update-stories.dto';
 import { StoriesService } from './stories.service';
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
 @Controller('stories')
 export class StoriesController {
   constructor(private readonly service: StoriesService) {}
 
   @Get('/getList')
-  async index(@Query('filters') filters: any) {
-    try {
-      return await this.service.findAll(filters);
-    } catch (error) {
-      console.log(error);
-    }
+  index(@Query('filters') filters: unknown) {
+    return this.service.findAll(filters);
   }
 
   @Get(':id')
-  async find(@Param('id') id: string) {
-    return await this.service.findOne(id);
+  find(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Post('/create')
-  async create(@Body() createStories: CreateStories) {
-    return await this.service.create(createStories);
+  create(@Body(validation) dto: CreateStories) {
+    return this.service.create(dto);
   }
 
   @Put('/update/:id')
-  async update(@Param('id') id: string, @Body() updateStories: UpdateStories) {
-    return await this.service.update(id, updateStories);
+  update(@Param('id') id: string, @Body(validation) dto: UpdateStories) {
+    return this.service.update(id, dto);
   }
 
   @Delete('/delete/:id')
-  async delete(@Param('id') id: string) {
-    return await this.service.delete(id);
+  delete(@Param('id') id: string) {
+    return this.service.delete(id);
   }
 }

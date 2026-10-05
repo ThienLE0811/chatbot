@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { deleteRecord, findRecord, updateRecord } from '../records';
 import { CreateRules } from './dto/create-rules.dto';
 import { UpdateRules } from './dto/update-rules.dto';
 import { Rules, RulesDocument } from './schema/rules.schema';
+
+const NOT_FOUND = 'Không tìm thấy rule';
 
 @Injectable()
 export class RulesService {
@@ -11,32 +14,28 @@ export class RulesService {
     @InjectModel(Rules.name) private readonly model: Model<RulesDocument>,
   ) {}
 
-  async findAll(): Promise<Rules[]> {
-    return await this.model.find().exec();
+  findAll(): Promise<Rules[]> {
+    return this.model.find().exec();
   }
 
-  async findOne(id: string): Promise<Rules> {
-    return await this.model.findById(id).exec();
+  findOne(id: string): Promise<Rules> {
+    return findRecord(this.model, id, NOT_FOUND);
   }
 
-  async create(dto: CreateRules): Promise<Rules> {
-    return await new this.model({
-      ...dto,
-      createdAt: new Date(),
-    }).save();
+  create(dto: CreateRules): Promise<Rules> {
+    return this.model.create({ ...dto, createdAt: new Date() });
   }
 
-  async update(id: string, updateRules: UpdateRules): Promise<Rules> {
-    return await this.model
-      .findByIdAndUpdate(
-        id,
-        { ...updateRules, updatedAt: Date.now() },
-        { new: true },
-      )
-      .exec();
+  update(id: string, dto: UpdateRules): Promise<Rules> {
+    return updateRecord(
+      this.model,
+      id,
+      { ...dto, updatedAt: new Date() },
+      NOT_FOUND,
+    );
   }
 
-  async delete(id: string): Promise<Rules> {
-    return await this.model.findByIdAndDelete(id).exec();
+  delete(id: string): Promise<Rules> {
+    return deleteRecord(this.model, id, NOT_FOUND);
   }
 }

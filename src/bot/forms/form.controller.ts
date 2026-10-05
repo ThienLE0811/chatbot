@@ -1,36 +1,39 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
-import { CreateForms} from './dto/create-response.dto';
-import { UpdateForms} from './dto/update-response.dto';
-import { FormsService} from './form.service';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Put,
+  ValidationPipe,
+} from '@nestjs/common';
+import { CreateForms } from './dto/create-response.dto';
+import { UpdateForms } from './dto/update-response.dto';
+import { FormsService } from './form.service';
+
+const validation = new ValidationPipe({ transform: true, whitelist: true });
 
 @Controller('forms')
 export class FormsController {
   constructor(private readonly service: FormsService) {}
 
-   @Get()
-  async index() {
-    return await this.service.findAll();
+  @Get()
+  index() {
+    return this.service.findAll();
   }
 
   @Get(':id')
-  async find(@Param('id') id: string) {
-    return await this.service.findOne(id);
+  find(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Post()
-  async create(@Body() createForms: CreateForms) {
-    return await this.service.create(createForms);
+  create(@Body(validation) dto: CreateForms) {
+    return this.service.create(dto);
   }
 
   @Put(':id')
-  async update(@Param('id') id: string, @Body() updateForms: UpdateForms) {
-    return await this.service.update(id, updateForms);
+  update(@Param('id') id: string, @Body(validation) dto: UpdateForms) {
+    return this.service.update(id, dto);
   }
 }
-
-
-
-
-
-
-

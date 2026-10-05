@@ -35,6 +35,17 @@ export class ApiExceptionFilter implements ExceptionFilter {
       // per-field messages of a validation error.
       return { statusCode, message: exception.message, ...response };
     }
+    if (isDuplicateKey(exception)) {
+      // A unique index refused the write, e.g. two stories with one name, or
+      // two requests racing past the service's own "already exists" check.
+      const [field, value] = Object.entries(exception.keyValue ?? {})[0] ?? [];
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        message: field
+          ? `Giá trị "${value}" của trường ${field} đã tồn tại`
+          : 'Dữ liệu đã tồn tại',
+      };
+    }
     this.logger.error(
       exception instanceof Error ? exception.stack : String(exception),
     );
@@ -43,4 +54,11 @@ export class ApiExceptionFilter implements ExceptionFilter {
       message: 'Internal server error',
     };
   }
+}
+
+/** Mongo's E11000, raised by a unique index. */
+function isDuplicateKey(
+  error: unknown,
+): error is { code: 11000; keyValue?: Record<string, unknown> } {
+  return (error as { code?: unknown })?.code === 11000;
 }
